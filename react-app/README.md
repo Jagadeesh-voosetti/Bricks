@@ -1,5 +1,15 @@
 # React + Vite
 
+## Deploying to GitHub Pages
+
+The repository's GitHub Actions workflow builds `react-app` and deploys it to
+GitHub Pages whenever changes are pushed to `main`. The public site URL is:
+
+`https://Jagadeesh-voosetti.github.io/Bricks/`
+
+The workflow builds with `/Bricks/` as the base path so the app's assets load
+from the repository Pages URL.
+
 This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
 
 Currently, two official plugins are available:
