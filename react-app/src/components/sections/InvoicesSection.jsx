@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { AlertCircle, Download, FileText, LoaderCircle, RefreshCw } from 'lucide-react';
 import { supabase } from '../../supabaseClient';
+import { getMarketplaceErrorMessage } from '../../utils/marketplaceErrors';
 
 const formatMoney = (amount) => `Rs. ${Number(amount || 0).toLocaleString('en-IN', {
   minimumFractionDigits: 2,
@@ -37,7 +38,7 @@ export default function InvoicesSection({ t, lang, user }) {
         .order('paid_at', { ascending: false });
 
       if (fetchError) {
-        setError(fetchError.message);
+        setError(getMarketplaceErrorMessage(fetchError, t));
       } else {
         setError('');
         setInvoices(data || []);
@@ -47,7 +48,7 @@ export default function InvoicesSection({ t, lang, user }) {
     } finally {
       setLoading(false);
     }
-  }, [user.id]);
+  }, [t, user.id]);
 
   useEffect(() => {
     fetchInvoices();

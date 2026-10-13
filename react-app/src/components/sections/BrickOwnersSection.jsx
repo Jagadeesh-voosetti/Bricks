@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { AlertCircle, ArrowLeft, BrickWall, CheckCircle2, LoaderCircle, PackagePlus, ShoppingCart, Truck } from 'lucide-react';
 import { supabase } from '../../supabaseClient';
 import { BRICK_OWNERS } from '../../data/brickOwners';
+import { getMarketplaceErrorMessage } from '../../utils/marketplaceErrors';
 
 const formatNumber = (value) => Number(value || 0).toLocaleString('en-IN');
 const activeOrderStatuses = new Set(['paid', 'loading', 'dispatched', 'delivered']);
@@ -82,11 +83,11 @@ export default function BrickOwnersSection({ t, lang, user }) {
       .order('display_name_en');
 
     if (queryError) {
-      setError(queryError.message);
+      setError(getMarketplaceErrorMessage(queryError, t));
       return;
     }
     if (data) setOwners(data);
-  }, []);
+  }, [t]);
 
   const loadSelectedOwner = useCallback(async () => {
     if (!selectedOwnerId) return;
@@ -107,13 +108,13 @@ export default function BrickOwnersSection({ t, lang, user }) {
       ]);
 
       if (listingResult.error) {
-        setError(listingResult.error.message);
+        setError(getMarketplaceErrorMessage(listingResult.error, t));
         return;
       }
       setListings(listingResult.data || []);
       const ownerData = Array.isArray(ownerResult.data) ? ownerResult.data[0] : ownerResult.data;
       if (ownerResult.error) {
-        setError(ownerResult.error.message);
+        setError(getMarketplaceErrorMessage(ownerResult.error, t));
         setLinkedOwner(null);
       } else {
         setLinkedOwner(ownerData || null);
@@ -127,7 +128,7 @@ export default function BrickOwnersSection({ t, lang, user }) {
           .in('status', ['paid', 'loading', 'dispatched', 'delivered'])
           .order('created_at', { ascending: false });
         if (orderError) {
-          setError(orderError.message);
+          setError(getMarketplaceErrorMessage(orderError, t));
         } else {
           setOwnerOrders(orderData || []);
         }
@@ -139,7 +140,7 @@ export default function BrickOwnersSection({ t, lang, user }) {
     } finally {
       setLoading(false);
     }
-  }, [selectedOwnerId, user]);
+  }, [selectedOwnerId, t, user]);
 
   useEffect(() => {
     loadOwners();

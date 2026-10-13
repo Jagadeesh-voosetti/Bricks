@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../../supabaseClient';
 import { Calendar, AlertCircle, RefreshCw, Plus } from 'lucide-react';
+import { getMarketplaceErrorMessage } from '../../utils/marketplaceErrors';
 
 export default function OrdersSection({ t, user, localEnquiries, setActiveTab, onOpenEnquiry }) {
   const [dbOrders, setDbOrders] = useState([]);
@@ -43,14 +44,14 @@ export default function OrdersSection({ t, user, localEnquiries, setActiveTab, o
       setDbOrders(legacyResult.data || []);
       setMarketOrders(marketResult.data || []);
       const errors = [legacyResult.error?.message, marketResult.error?.message].filter(Boolean);
-      if (errors.length) setFetchError(errors.join(' · '));
+      if (errors.length) setFetchError(getMarketplaceErrorMessage(errors.join(' · '), t));
     } catch (err) {
       console.warn('Could not query database orders:', err);
       setFetchError(err.message);
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [t, user]);
 
   useEffect(() => {
     fetchOrders();
