@@ -8,7 +8,7 @@ export default function Auth({ t, onAuthSuccess }) {
   const [otpStep, setOtpStep] = useState('send'); // 'send' | 'verify'
   const [isSignup, setIsSignup] = useState(false);
   const [fullName, setFullName] = useState('');
-  const [phone, setPhone] = useState('6309776185');
+  const [phone, setPhone] = useState('');
   const [otpCode, setOtpCode] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -44,7 +44,7 @@ export default function Auth({ t, onAuthSuccess }) {
     const testSession = {
       user: {
         id: 'demo-jagadeesh-user',
-        phone: validateAndFormatPhone(phone) || '+916309776185',
+        phone: validateAndFormatPhone(phone),
         user_metadata: {
           full_name: fullName.trim() || 'Jagadeesh (Test User)'
         }
@@ -643,22 +643,23 @@ export default function Auth({ t, onAuthSuccess }) {
             </button>
           </div>
 
-          {/* Development Quick Bypass */}
-          <div style={{ marginTop: '14px', textAlign: 'center' }}>
-            <button
-              type="button"
-              onClick={handleQuickDemoLogin}
-              style={{
-                background: 'none',
-                color: '#15803d',
-                fontSize: '12px',
-                fontWeight: 700,
-                textDecoration: 'underline'
-              }}
-            >
-              ⚡ Developer Instant Login (Skip SMS & View Dashboard)
-            </button>
-          </div>
+          {import.meta.env.DEV && (
+            <div style={{ marginTop: '14px', textAlign: 'center' }}>
+              <button
+                type="button"
+                onClick={handleQuickDemoLogin}
+                style={{
+                  background: 'none',
+                  color: '#15803d',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  textDecoration: 'underline'
+                }}
+              >
+                ⚡ Developer Instant Login (Skip SMS & View Dashboard)
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
