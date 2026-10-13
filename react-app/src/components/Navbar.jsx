@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Layers, Truck, ShieldCheck, Tag, ShoppingBag, Users } from 'lucide-react';
+import { LayoutDashboard, Layers, Truck, ShieldCheck, Tag, ShoppingBag, Users, FileText } from 'lucide-react';
 
 export default function Navbar({ activeTab, setActiveTab, t, orderCount }) {
   const tabs = [
@@ -9,6 +9,7 @@ export default function Navbar({ activeTab, setActiveTab, t, orderCount }) {
     { id: 'quality', label: t.navQuality, icon: <ShieldCheck size={17} /> },
     { id: 'prices', label: t.navPrices, icon: <Tag size={17} /> },
     { id: 'owners', label: t.navOwners, icon: <Users size={17} /> },
+    { id: 'invoices', label: t.navInvoices, icon: <FileText size={17} /> },
     {
       id: 'orders',
       label: t.navOrders,

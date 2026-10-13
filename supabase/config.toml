@@ -1,0 +1,4 @@
+project_id = "bricks-land"
+
+[functions.marketplace-payment]
+verify_jwt = false

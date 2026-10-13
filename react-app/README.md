@@ -15,6 +15,54 @@ To use Supabase credentials that are not committed to the repository, add
 Settings > Secrets and variables > Actions. These client-side values are
 included in the published app; never use a Supabase service-role key here.
 
+## Brick owners, orders and invoices
+
+The owner directory stores only names. Owners must sign in with their own
+accounts, then an administrator must link each account to its owner profile
+from the Supabase SQL editor before it can manage stock or orders. To link an
+account, find the owner's UUID in Supabase Authentication > Users and run:
+
+```sql
+update public.brick_owners
+set auth_user_id = '<owner-auth-user-uuid>'
+where id = '<owner-profile-id>';
+```
+
+Each owner can then add brick types, actual stock and per-brick prices from
+their profile. Customers can order listed bricks, pay through Razorpay, and
+download a PDF invoice after the server verifies that the payment was captured.
+Owners see incoming paid orders and can move them through loading, dispatched
+and delivered. Owner accounts are linked by an administrator; users cannot
+claim an owner profile themselves.
+
+### Configure and deploy the Supabase backend
+
+Payment credentials are not committed to Git. In repository Settings > Secrets
+and variables > Actions, create these **Actions secrets**:
+
+- `SUPABASE_ACCESS_TOKEN`
+- `SUPABASE_DB_PASSWORD`
+- `RAZORPAY_KEY_ID`
+- `RAZORPAY_KEY_SECRET`
+- `RAZORPAY_WEBHOOK_SECRET`
+
+Use Razorpay test keys while testing and live keys only after enabling live
+payments in the Razorpay account. Do not send these secret values in chat.
+After adding the secrets, run the **Deploy brick marketplace backend** workflow
+from Actions once. It applies the database migration and deploys the verified
+payment function.
+
+For payment notifications if a customer closes checkout before returning to
+the app, add an `order.paid` webhook in Razorpay pointing to:
+
+`https://zjabvburavcuvtpszuzw.supabase.co/functions/v1/marketplace-payment`
+
+Use the same webhook secret stored as `RAZORPAY_WEBHOOK_SECRET`. Captured
+payments are verified server-side before an invoice number is issued. Expired
+stock reservations are released, and a captured payment after expiry is
+refunded where possible; unresolved provider errors are reported for
+administrator follow-up.
+
 This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
 
 Currently, two official plugins are available:

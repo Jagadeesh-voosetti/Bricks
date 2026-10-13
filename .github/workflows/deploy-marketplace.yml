@@ -1,0 +1,59 @@
+name: Deploy brick marketplace backend
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      SUPABASE_PROJECT_REF: zjabvburavcuvtpszuzw
+      RAZORPAY_KEY_ID: ${{ secrets.RAZORPAY_KEY_ID }}
+      RAZORPAY_KEY_SECRET: ${{ secrets.RAZORPAY_KEY_SECRET }}
+      RAZORPAY_WEBHOOK_SECRET: ${{ secrets.RAZORPAY_WEBHOOK_SECRET }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Check required secrets
+        shell: bash
+        run: |
+          missing=0
+          for name in SUPABASE_ACCESS_TOKEN SUPABASE_DB_PASSWORD RAZORPAY_KEY_ID RAZORPAY_KEY_SECRET RAZORPAY_WEBHOOK_SECRET; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Repository Actions secret $name is required."
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
+
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link Supabase project
+        run: supabase link --project-ref "$SUPABASE_PROJECT_REF" --password "$SUPABASE_DB_PASSWORD"
+
+      - name: Apply database migration
+        run: supabase db push --linked --yes
+
+      - name: Configure payment secrets
+        shell: bash
+        run: |
+          secret_file="$RUNNER_TEMP/marketplace-function-secrets.env"
+          printf 'RAZORPAY_KEY_ID=%s\nRAZORPAY_KEY_SECRET=%s\nRAZORPAY_WEBHOOK_SECRET=%s\n' \
+            "$RAZORPAY_KEY_ID" "$RAZORPAY_KEY_SECRET" "$RAZORPAY_WEBHOOK_SECRET" > "$secret_file"
+          chmod 600 "$secret_file"
+          supabase secrets set --env-file "$secret_file" --project-ref "$SUPABASE_PROJECT_REF"
+          rm -f "$secret_file"
+
+      - name: Deploy payment verification function
+        run: supabase functions deploy marketplace-payment --project-ref "$SUPABASE_PROJECT_REF"

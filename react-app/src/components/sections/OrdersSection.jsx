@@ -1,45 +1,63 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../../supabaseClient';
-import { ShoppingBag, Calendar, Clock, Layers, CheckCircle2, AlertCircle, RefreshCw, Plus } from 'lucide-react';
+import { Calendar, AlertCircle, RefreshCw, Plus } from 'lucide-react';
 
 export default function OrdersSection({ t, user, localEnquiries, setActiveTab, onOpenEnquiry }) {
   const [dbOrders, setDbOrders] = useState([]);
+  const [marketOrders, setMarketOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState(null);
 
-  const fetchOrders = async () => {
-    if (!user) return;
+  const fetchOrders = useCallback(async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setFetchError(null);
     try {
-      // Query real orders table for authenticated user
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('customer_id', user.id)
-        .order('created_at', { ascending: false });
+      const [legacyResult, marketResult] = await Promise.all([
+        supabase
+          .from('orders')
+          .select('*')
+          .eq('customer_id', user.id)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('brick_orders')
+          .select(`
+            id,
+            quantity,
+            total_amount,
+            status,
+            invoice_number,
+            delivery_note,
+            created_at,
+            paid_at,
+            owner:brick_owners!brick_orders_owner_id_fkey(display_name_en, display_name_te),
+            listing:brick_listings!brick_orders_listing_id_fkey(name)
+          `)
+          .eq('customer_id', user.id)
+          .order('created_at', { ascending: false })
+      ]);
 
-      if (error) {
-        // If table query has issues or RLS restricts, log and gracefully display
-        console.warn('Orders query returned:', error.message);
-        setFetchError(error.message);
-      } else {
-        setDbOrders(data || []);
-      }
+      setDbOrders(legacyResult.data || []);
+      setMarketOrders(marketResult.data || []);
+      const errors = [legacyResult.error?.message, marketResult.error?.message].filter(Boolean);
+      if (errors.length) setFetchError(errors.join(' · '));
     } catch (err) {
       console.warn('Could not query database orders:', err);
       setFetchError(err.message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     fetchOrders();
-  }, [user]);
+  }, [fetchOrders]);
 
   // Combine real database orders and any local session enquiries
-  const totalCount = (dbOrders?.length || 0) + (localEnquiries?.length || 0);
+  const totalCount = (dbOrders?.length || 0) + (marketOrders?.length || 0) + (localEnquiries?.length || 0);
 
   return (
     <div>
@@ -79,7 +97,7 @@ export default function OrdersSection({ t, user, localEnquiries, setActiveTab, o
         </div>
       )}
 
-      {totalCount === 0 && !loading ? (
+      {totalCount === 0 && !loading && !fetchError ? (
         <div className="empty-state">
           <div className="empty-icon">📦</div>
           <h3 className="empty-title">{t.noOrdersTitle}</h3>
@@ -94,6 +112,44 @@ export default function OrdersSection({ t, user, localEnquiries, setActiveTab, o
         </div>
       ) : (
         <div style={{ display: 'grid', gap: '18px' }}>
+          {marketOrders.map((order) => (
+            <article key={order.id} className="content-card" style={{ borderLeft: '4px solid #e96f21' }}>
+              <div className="card-top">
+                <div>
+                  <div style={{ fontSize: '12px', color: '#64748b' }}>
+                    {t.orderId}: <strong style={{ color: '#0f172a' }}>#{order.id.slice(0, 8).toUpperCase()}</strong>
+                  </div>
+                  {order.invoice_number && (
+                    <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+                      {t.invoiceNumber}: <strong>{order.invoice_number}</strong>
+                    </div>
+                  )}
+                  <div style={{ fontSize: '13px', color: '#64748b', marginTop: '4px' }}>
+                    <Calendar size={13} style={{ display: 'inline', marginRight: '4px' }} />
+                    {new Date(order.created_at).toLocaleDateString()}
+                  </div>
+                </div>
+                <span className={`status-pill status-${order.status}`}>
+                  {t[`orderStatus_${order.status}`] || order.status}
+                </span>
+              </div>
+              <h3 style={{ fontSize: '17px', color: '#12394d', marginBottom: '8px' }}>
+                {order.listing?.name || t.orderItem}
+              </h3>
+              <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', fontSize: '14px' }}>
+                <span><strong>{t.orderQuantity}:</strong> {Number(order.quantity).toLocaleString('en-IN')} {t.ownerBricks}</span>
+                <span><strong>{t.invoiceOwner}:</strong> {order.owner?.display_name_en || order.owner?.display_name_te}</span>
+                <span><strong>{t.invoiceTotal}:</strong> ₹{Number(order.total_amount).toLocaleString('en-IN')}</span>
+              </div>
+              {order.delivery_note && <p className="order-delivery-note"><strong>{t.ownerDeliveryNote}:</strong> {order.delivery_note}</p>}
+              {order.invoice_number && (
+                <button type="button" className="btn-outline order-invoice-link" onClick={() => setActiveTab('invoices')}>
+                  {t.invoiceDownload}
+                </button>
+              )}
+            </article>
+          ))}
+
           {/* Real Supabase Database Orders */}
           {dbOrders.map((order) => (
             <article key={order.id} className="content-card" style={{ borderLeft: '4px solid #15803d' }}>

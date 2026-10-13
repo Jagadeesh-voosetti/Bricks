@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { lazy, Suspense, useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 import { translations } from './translations';
 import Header from './components/Header';
@@ -10,8 +10,10 @@ import TransportSection from './components/sections/TransportSection';
 import QualitySection from './components/sections/QualitySection';
 import PricesSection from './components/sections/PricesSection';
 import OrdersSection from './components/sections/OrdersSection';
-import BrickOwnersSection from './components/sections/BrickOwnersSection';
 import EnquiryModal from './components/EnquiryModal';
+
+const BrickOwnersSection = lazy(() => import('./components/sections/BrickOwnersSection'));
+const InvoicesSection = lazy(() => import('./components/sections/InvoicesSection'));
 
 export default function App() {
   const [lang, setLang] = useState(() => {
@@ -207,7 +209,15 @@ export default function App() {
         )}
 
         {activeTab === 'owners' && (
-          <BrickOwnersSection t={t} />
+          <Suspense fallback={<div className="owner-loading">{t.ownerLoading || 'Loading...'}</div>}>
+            <BrickOwnersSection t={t} lang={lang} user={session?.user} />
+          </Suspense>
+        )}
+
+        {activeTab === 'invoices' && (
+          <Suspense fallback={<div className="owner-loading">{t.ownerLoading || 'Loading...'}</div>}>
+            <InvoicesSection t={t} lang={lang} user={session?.user} />
+          </Suspense>
         )}
       </main>
 
