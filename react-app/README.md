@@ -10,6 +10,11 @@ GitHub Pages whenever changes are pushed to `main`. The public site URL is:
 The workflow builds with `/Bricks/` as the base path so the app's assets load
 from the repository Pages URL.
 
+To use Supabase credentials that are not committed to the repository, add
+`VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` under the repository's
+Settings > Secrets and variables > Actions. These client-side values are
+included in the published app; never use a Supabase service-role key here.
+
 This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
 
 Currently, two official plugins are available:

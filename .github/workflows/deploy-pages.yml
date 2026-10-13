@@ -34,7 +34,17 @@ jobs:
         run: npm ci --prefix react-app
 
       - name: Build app
-        run: npm --prefix react-app run build -- --base=/Bricks/
+        run: |
+          if [ -n "$SUPABASE_URL_SECRET" ]; then
+            export VITE_SUPABASE_URL="$SUPABASE_URL_SECRET"
+          fi
+          if [ -n "$SUPABASE_ANON_KEY_SECRET" ]; then
+            export VITE_SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY_SECRET"
+          fi
+          npm --prefix react-app run build -- --base=/Bricks/
+        env:
+          SUPABASE_URL_SECRET: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_ANON_KEY_SECRET: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
