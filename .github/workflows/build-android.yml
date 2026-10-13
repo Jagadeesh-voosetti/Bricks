@@ -1,0 +1,56 @@
+name: Build Bricks-Land Android APK
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "react-app/**"
+      - ".github/workflows/build-android.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: react-app/package-lock.json
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+          cache-dependency-path: react-app/android/gradle/wrapper/gradle-wrapper.properties
+
+      - name: Install dependencies
+        run: npm ci --prefix react-app
+
+      - name: Build web assets for Android
+        run: npm --prefix react-app run build:android
+
+      - name: Sync Capacitor Android project
+        working-directory: react-app
+        run: npx cap sync android
+
+      - name: Build debug APK
+        working-directory: react-app/android
+        run: ./gradlew assembleDebug
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Bricks-Land-Android-debug
+          path: react-app/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error

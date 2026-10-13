@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Bricks-Land</string>
+    <string name="title_activity_main">Bricks-Land</string>
+    <string name="package_name">com.bricksland.app</string>
+    <string name="custom_url_scheme">com.bricksland.app</string>
+</resources>

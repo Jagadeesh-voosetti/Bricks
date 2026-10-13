@@ -10,6 +10,14 @@ GitHub Pages whenever changes are pushed to `main`. The public site URL is:
 The workflow builds with `/Bricks/` as the base path so the app's assets load
 from the repository Pages URL.
 
+## Android app
+
+The **Build Bricks-Land Android APK** workflow creates a debug APK and uploads
+it as the `Bricks-Land-Android-debug` artifact. Download it from the workflow
+run's summary in GitHub Actions. This APK is for testing and direct
+installation; publishing to Google Play requires a separately signed release
+build.
+
 To use Supabase credentials that are not committed to the repository, add
 `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` under the repository's
 Settings > Secrets and variables > Actions. These client-side values are
