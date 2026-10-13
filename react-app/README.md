@@ -50,15 +50,18 @@ and variables > Actions, create these **Actions secrets**:
 
 - `SUPABASE_ACCESS_TOKEN`
 - `SUPABASE_DB_PASSWORD`
+
+To deploy payment verification as well, also create:
+
 - `RAZORPAY_KEY_ID`
 - `RAZORPAY_KEY_SECRET`
 - `RAZORPAY_WEBHOOK_SECRET`
 
 Use Razorpay test keys while testing and live keys only after enabling live
 payments in the Razorpay account. Do not send these secret values in chat.
-After adding the secrets, run the **Deploy brick marketplace backend** workflow
-from Actions once. It applies the database migration and deploys the verified
-payment function.
+After adding the Supabase secrets, run the **Deploy brick marketplace backend**
+workflow from Actions. It applies the database migrations. The payment function
+is deployed too when all three Razorpay secrets are configured.
 
 For payment notifications if a customer closes checkout before returning to
 the app, add an `order.paid` webhook in Razorpay pointing to:

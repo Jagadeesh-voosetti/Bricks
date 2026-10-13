@@ -24,7 +24,7 @@ jobs:
         shell: bash
         run: |
           missing=0
-          for name in SUPABASE_ACCESS_TOKEN SUPABASE_DB_PASSWORD RAZORPAY_KEY_ID RAZORPAY_KEY_SECRET RAZORPAY_WEBHOOK_SECRET; do
+          for name in SUPABASE_ACCESS_TOKEN SUPABASE_DB_PASSWORD; do
             if [ -z "${!name}" ]; then
               echo "::error::Repository Actions secret $name is required."
               missing=1
@@ -32,6 +32,24 @@ jobs:
           done
           if [ "$missing" -ne 0 ]; then
             exit 1
+          fi
+
+      - name: Check payment secrets
+        id: payment
+        shell: bash
+        run: |
+          missing=0
+          for name in RAZORPAY_KEY_ID RAZORPAY_KEY_SECRET RAZORPAY_WEBHOOK_SECRET; do
+            if [ -z "${!name}" ]; then
+              echo "::warning::Repository Actions secret $name is not configured."
+              missing=1
+            fi
+          done
+          if [ "$missing" -eq 0 ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Database migrations will still be applied, but Razorpay payment verification will not be deployed until all three payment secrets are configured."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Set up Supabase CLI
@@ -46,6 +64,7 @@ jobs:
         run: supabase db push --linked --yes
 
       - name: Configure payment secrets
+        if: steps.payment.outputs.enabled == 'true'
         shell: bash
         run: |
           secret_file="$RUNNER_TEMP/marketplace-function-secrets.env"
@@ -56,4 +75,5 @@ jobs:
           rm -f "$secret_file"
 
       - name: Deploy payment verification function
+        if: steps.payment.outputs.enabled == 'true'
         run: supabase functions deploy marketplace-payment --project-ref "$SUPABASE_PROJECT_REF"
