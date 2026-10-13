@@ -536,6 +536,125 @@ input, select, textarea {
   border-color: #cbd5e1;
 }
 
+.owner-profile-card {
+  min-height: 112px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  text-align: left;
+  color: var(--text-main);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.owner-profile-card:hover {
+  border-color: var(--orange-primary);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.owner-profile-card:focus-visible,
+.owner-back-button:focus-visible {
+  outline: 3px solid var(--orange-primary);
+  outline-offset: 2px;
+}
+
+.owner-avatar {
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--navy-primary);
+  background: #fff1e6;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.owner-avatar-large {
+  width: 64px;
+  height: 64px;
+  flex-basis: 64px;
+  font-size: 20px;
+}
+
+.owner-profile-copy {
+  min-width: 0;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.owner-label {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.owner-name {
+  color: var(--navy-primary);
+  font-size: 16px;
+  font-weight: 750;
+}
+
+.owner-open-arrow {
+  color: var(--orange-primary);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.owner-back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.owner-detail-heading {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 26px;
+}
+
+.owner-detail-heading .section-title {
+  margin-bottom: 0;
+}
+
+.owner-listing-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-sm);
+  color: var(--orange-primary);
+  background: var(--orange-light);
+}
+
+.owner-empty-state {
+  min-height: 170px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  color: var(--text-muted);
+  text-align: center;
+  background: #fff;
+  border: 1px dashed #cbd5e1;
+  border-radius: var(--radius-md);
+}
+
+.owner-empty-state svg {
+  color: var(--orange-primary);
+}
+
 .card-top {
   display: flex;
   align-items: flex-start;

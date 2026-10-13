@@ -49,8 +49,18 @@ export const translations = {
     navTransport: "Transport",
     navQuality: "Quality",
     navPrices: "Prices",
+    navOwners: "Brick Owners",
     navOrders: "My Orders & Enquiries",
     logout: "Log out",
+
+    ownersTitle: "Brick Owners",
+    ownersSubtitle: "Choose an owner to view their brick stock and prices.",
+    ownerProfile: "Brick owner",
+    ownerBack: "All brick owners",
+    ownerStock: "Stock",
+    ownerPrice: "Price",
+    ownerPerBrick: "per brick",
+    ownerNoListings: "Stock and prices have not been added to this profile yet.",
 
     // Overview
     welcomeTitle: "Welcome to Bricks-Land 👋",
@@ -192,8 +202,18 @@ export const translations = {
     navTransport: "రవాణా",
     navQuality: "నాణ్యత",
     navPrices: "ధరలు",
+    navOwners: "ఇటుకల యజమానులు",
     navOrders: "నా ఆర్డర్లు & విచారణలు",
     logout: "లాగ్ అవుట్",
+
+    ownersTitle: "ఇటుకల యజమానులు",
+    ownersSubtitle: "వారి ఇటుకల నిల్వ మరియు ధరలను చూడటానికి యజమానిని ఎంచుకోండి.",
+    ownerProfile: "ఇటుకల యజమాని",
+    ownerBack: "యజమానులందరూ",
+    ownerStock: "నిల్వ",
+    ownerPrice: "ధర",
+    ownerPerBrick: "ఒక్క ఇటుకకు",
+    ownerNoListings: "ఈ ప్రొఫైల్‌లో ఇంకా నిల్వ మరియు ధరల వివరాలు జోడించలేదు.",
 
     // Overview
     welcomeTitle: "బ్రిక్స్-ల్యాండ్‌కు స్వాగతం 👋",
@@ -335,8 +355,18 @@ export const translations = {
     navTransport: "परिवहन",
     navQuality: "गुणवत्ता",
     navPrices: "कीमतें",
+    navOwners: "ईंट मालिक",
     navOrders: "मेरे ऑर्डर और पूछताछ",
     logout: "लॉग आउट",
+
+    ownersTitle: "ईंट मालिक",
+    ownersSubtitle: "ईंटों का स्टॉक और कीमतें देखने के लिए मालिक चुनें।",
+    ownerProfile: "ईंट मालिक",
+    ownerBack: "सभी ईंट मालिक",
+    ownerStock: "स्टॉक",
+    ownerPrice: "कीमत",
+    ownerPerBrick: "प्रति ईंट",
+    ownerNoListings: "इस प्रोफ़ाइल पर अभी स्टॉक और कीमतें नहीं जोड़ी गई हैं।",
 
     // Overview
     welcomeTitle: "ब्रिक्स-लैंड में आपका स्वागत है 👋",

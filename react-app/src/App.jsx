@@ -10,6 +10,7 @@ import TransportSection from './components/sections/TransportSection';
 import QualitySection from './components/sections/QualitySection';
 import PricesSection from './components/sections/PricesSection';
 import OrdersSection from './components/sections/OrdersSection';
+import BrickOwnersSection from './components/sections/BrickOwnersSection';
 import EnquiryModal from './components/EnquiryModal';
 
 export default function App() {
@@ -203,6 +204,10 @@ export default function App() {
             setActiveTab={setActiveTab}
             onOpenEnquiry={handleOpenEnquiry}
           />
+        )}
+
+        {activeTab === 'owners' && (
+          <BrickOwnersSection t={t} />
         )}
       </main>
 
