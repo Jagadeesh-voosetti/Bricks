@@ -63,6 +63,35 @@ stock reservations are released, and a captured payment after expiry is
 refunded where possible; unresolved provider errors are reported for
 administrator follow-up.
 
+### Collecting owner details with Google Forms
+
+An administrator can create a bilingual owner intake form from the script in
+`google-apps-script/BrickOwnerIntake.gs`:
+
+1. Open [script.new](https://script.new) using the administrator's Google
+   account, paste the script, and run `createBrickOwnerIntakeForm`. Approve
+   Google's requested Forms, Sheets, and trigger permissions.
+2. The function logs a responder form URL and a private review spreadsheet URL.
+   Send only the responder URL to the brick owners.
+3. In the Apps Script project's **Project Settings > Script Properties**, add
+   `SUPABASE_URL` with the project URL and `SUPABASE_SERVICE_ROLE_KEY` with the
+   Supabase service-role key. Never put this key in the form, spreadsheet
+   responses, website code, Git, or a message. Keep the Apps Script project and
+   linked response spreadsheet restricted to trusted administrators.
+4. Review each submission and confirm the selected owner identity and details.
+   Change **Admin review status** to `Approved` only after verification. The
+   installed trigger then updates the owner's location and creates/updates
+   their listing. The private phone response is for administrator follow-up
+   only and is never published.
+5. The backend deployment workflow must have applied both marketplace
+   migrations before approved submissions can publish. A listing is safe to
+   retry: each response is upserted using its unique spreadsheet row key.
+
+This form gathers owner/location, brick name and type, available stock,
+per-brick price, private contact phone, and notes. Google Form submissions stay
+pending and do not change public stock or prices until an administrator
+approves them.
+
 This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
 
 Currently, two official plugins are available:
