@@ -536,6 +536,52 @@ input, select, textarea {
   border-color: #cbd5e1;
 }
 
+.materials-card {
+  min-height: 220px;
+}
+
+.materials-card-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.materials-icon {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-sm);
+  color: var(--orange-primary);
+  background: var(--orange-light);
+}
+
+.materials-card h2 {
+  color: var(--navy-primary);
+  font-size: 17px;
+  line-height: 1.35;
+}
+
+.materials-use {
+  display: inline-flex;
+  align-self: flex-start;
+  margin-bottom: 10px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  color: var(--navy-primary);
+  background: #edf2f4;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.materials-card p {
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
 .owner-profile-card {
   min-height: 112px;
   padding: 20px;

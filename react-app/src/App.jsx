@@ -6,6 +6,7 @@ import Navbar from './components/Navbar';
 import Auth from './components/Auth';
 import OverviewSection from './components/sections/OverviewSection';
 import StockSection from './components/sections/StockSection';
+import MaterialsSection from './components/sections/MaterialsSection';
 import TransportSection from './components/sections/TransportSection';
 import QualitySection from './components/sections/QualitySection';
 import PricesSection from './components/sections/PricesSection';
@@ -177,6 +178,8 @@ export default function App() {
             onOpenEnquiry={handleOpenEnquiry}
           />
         )}
+
+        {activeTab === 'materials' && <MaterialsSection t={t} />}
 
         {activeTab === 'transport' && (
           <TransportSection

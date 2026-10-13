@@ -4,8 +4,6 @@ import { X, CheckCircle2, AlertCircle } from 'lucide-react';
 import { BRICK_PRODUCTS } from '../data/mockData';
 
 export default function EnquiryModal({ isOpen, onClose, preselectedBrick, t, user, onAddEnquiry }) {
-  if (!isOpen) return null;
-
   const [selectedBrickName, setSelectedBrickName] = useState(
     preselectedBrick?.name || BRICK_PRODUCTS[0].name
   );
@@ -14,6 +12,8 @@ export default function EnquiryModal({ isOpen, onClose, preselectedBrick, t, use
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+
+  if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();

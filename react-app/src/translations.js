@@ -46,6 +46,7 @@ export const translations = {
     // Nav
     navOverview: "Overview",
     navStock: "Brick Stock",
+    navMaterials: "Brick Materials",
     navTransport: "Transport",
     navQuality: "Quality",
     navPrices: "Prices",
@@ -53,6 +54,21 @@ export const translations = {
     navOrders: "My Orders & Enquiries",
     navInvoices: "Invoices",
     logout: "Log out",
+
+    materialsTitle: "Brick-Making Materials",
+    materialsSubtitle: "A guide to the main materials used in fired-clay and fly-ash brick production.",
+    materialsNoticeTitle: "Materials and mixes vary",
+    materialsNotice: "The right materials and proportions depend on local soil tests, the brick type, and the production method. This is a general guide, not a manufacturing recipe; confirm mixes and standards with a qualified local professional.",
+    materialsUseLabel: "Used for",
+    materialItems: [
+      { name: "Clay-rich soil", use: "Fired-clay bricks", description: "The main raw material for traditional fired-clay bricks. Soil composition should be checked for plasticity, shrinkage, and contaminants." },
+      { name: "Water", use: "Mixing and shaping", description: "Adds workable consistency to clay mixtures. Controlled water is also used during curing of many fly-ash bricks." },
+      { name: "Sand or stone dust", use: "Depends on the mix", description: "May temper highly plastic clay or serve as aggregate in fly-ash bricks. The need and quantity depend on material tests." },
+      { name: "Fly ash", use: "Fly-ash bricks", description: "A fine industrial by-product used as a major constituent in fly-ash bricks, combined with suitable binders and aggregates." },
+      { name: "Lime or cement", use: "Fly-ash brick binder", description: "Provides binding strength in fly-ash brick mixes. The binder choice and proportion must follow a tested formulation." },
+      { name: "Gypsum", use: "Some fly-ash mixes", description: "Used in some formulations to help regulate setting and improve the mix; it is not required in every brick type." },
+      { name: "Kiln fuel", use: "Firing process only", description: "Provides heat for firing clay bricks in a kiln. Fuel is a process input, not part of the brick mixture." }
+    ],
 
     ownersTitle: "Brick Owners",
     ownersSubtitle: "Choose an owner to view their brick stock and prices.",
@@ -259,6 +275,7 @@ export const translations = {
     // Nav
     navOverview: "అవలోకనం",
     navStock: "ఇటుకల నిల్వ",
+    navMaterials: "ఇటుకల ముడి పదార్థాలు",
     navTransport: "రవాణా",
     navQuality: "నాణ్యత",
     navPrices: "ధరలు",
@@ -266,6 +283,21 @@ export const translations = {
     navOrders: "నా ఆర్డర్లు & విచారణలు",
     navInvoices: "ఇన్వాయిస్‌లు",
     logout: "లాగ్ అవుట్",
+
+    materialsTitle: "ఇటుకల తయారీ ముడి పదార్థాలు",
+    materialsSubtitle: "కాల్చిన మట్టి మరియు ఫ్లై యాష్ ఇటుకల తయారీలో ఉపయోగించే ప్రధాన పదార్థాల వివరాలు.",
+    materialsNoticeTitle: "పదార్థాలు, మిశ్రమ నిష్పత్తులు మారవచ్చు",
+    materialsNotice: "సరైన పదార్థాలు, నిష్పత్తులు స్థానిక మట్టి పరీక్షలు, ఇటుక రకం మరియు తయారీ విధానంపై ఆధారపడి ఉంటాయి. ఇది సాధారణ సమాచారం మాత్రమే; ఖచ్చితమైన మిశ్రమం, ప్రమాణాల కోసం అర్హత కలిగిన స్థానిక నిపుణుడిని సంప్రదించండి.",
+    materialsUseLabel: "ఉపయోగం",
+    materialItems: [
+      { name: "బంకమట్టి / మట్టి", use: "కాల్చిన మట్టి ఇటుకలు", description: "సాంప్రదాయంగా కాల్చే మట్టి ఇటుకలకు ఇది ప్రధాన ముడి పదార్థం. మట్టిలోని పదార్థాలు, సంకోచం మరియు కలుషితాలను పరీక్షించాలి." },
+      { name: "నీరు", use: "కలపడం, ఆకారం ఇవ్వడం", description: "మట్టి మిశ్రమాన్ని పని చేయడానికి అనువుగా చేస్తుంది. ఫ్లై యాష్ ఇటుకల తయారీలో నియంత్రిత నీటితో క్యూరింగ్ కూడా చేస్తారు." },
+      { name: "ఇసుక లేదా రాతి పొడి", use: "మిశ్రమాన్ని బట్టి", description: "ఎక్కువగా జిగురుగా ఉండే మట్టిని సరిచేయడానికి లేదా ఫ్లై యాష్ ఇటుకల్లో అగ్రిగేట్‌గా ఉపయోగించవచ్చు. అవసరం పరీక్షలపై ఆధారపడి ఉంటుంది." },
+      { name: "ఫ్లై యాష్", use: "ఫ్లై యాష్ ఇటుకలు", description: "ఫ్లై యాష్ ఇటుకల్లో ప్రధానంగా ఉపయోగించే సూక్ష్మ పారిశ్రామిక ఉప ఉత్పత్తి. దీనిని తగిన బైండర్లు, అగ్రిగేట్లతో కలుపుతారు." },
+      { name: "సున్నం లేదా సిమెంట్", use: "ఫ్లై యాష్ ఇటుక బైండర్", description: "ఫ్లై యాష్ ఇటుక మిశ్రమానికి బంధన బలాన్ని ఇస్తాయి. ఎంపిక, నిష్పత్తి పరీక్షించిన విధానం ప్రకారం ఉండాలి." },
+      { name: "జిప్సం", use: "కొన్ని ఫ్లై యాష్ మిశ్రమాలు", description: "కొన్ని మిశ్రమాల్లో గట్టిపడే ప్రక్రియను నియంత్రించడానికి ఉపయోగిస్తారు; ప్రతి ఇటుక రకానికీ ఇది అవసరం కాదు." },
+      { name: "బట్టీ ఇంధనం", use: "కాల్చే ప్రక్రియకు మాత్రమే", description: "మట్టి ఇటుకలను బట్టీలో కాల్చడానికి వేడిని అందిస్తుంది. ఇది ఇటుక మిశ్రమంలో కలిపే పదార్థం కాదు." }
+    ],
 
     ownersTitle: "ఇటుకల యజమానులు",
     ownersSubtitle: "వారి ఇటుకల నిల్వ మరియు ధరలను చూడటానికి యజమానిని ఎంచుకోండి.",
@@ -472,6 +504,7 @@ export const translations = {
     // Nav
     navOverview: "अवलोकन",
     navStock: "ईंटों का स्टॉक",
+    navMaterials: "ईंट बनाने की सामग्री",
     navTransport: "परिवहन",
     navQuality: "गुणवत्ता",
     navPrices: "कीमतें",
@@ -479,6 +512,21 @@ export const translations = {
     navOrders: "मेरे ऑर्डर और पूछताछ",
     navInvoices: "चालान",
     logout: "लॉग आउट",
+
+    materialsTitle: "ईंट बनाने की सामग्री",
+    materialsSubtitle: "पकी मिट्टी और फ्लाई ऐश की ईंटों में उपयोग होने वाली मुख्य सामग्री की जानकारी।",
+    materialsNoticeTitle: "सामग्री और मिश्रण बदल सकते हैं",
+    materialsNotice: "सही सामग्री और अनुपात स्थानीय मिट्टी की जाँच, ईंट के प्रकार और निर्माण विधि पर निर्भर करते हैं। यह सामान्य जानकारी है, निर्माण नुस्खा नहीं; मिश्रण और मानकों के लिए योग्य स्थानीय विशेषज्ञ से सलाह लें।",
+    materialsUseLabel: "उपयोग",
+    materialItems: [
+      { name: "चिकनी मिट्टी", use: "पकी मिट्टी की ईंटें", description: "पारंपरिक पकी मिट्टी की ईंटों का मुख्य कच्चा माल। मिट्टी की संरचना, सिकुड़न और अशुद्धियों की जाँच करनी चाहिए।" },
+      { name: "पानी", use: "मिश्रण और आकार देना", description: "मिट्टी के मिश्रण को आकार देने योग्य बनाता है। फ्लाई ऐश की कई ईंटों को पकाने के बजाय नियंत्रित पानी से क्योर किया जाता है।" },
+      { name: "रेत या पत्थर की धूल", use: "मिश्रण के अनुसार", description: "अधिक प्लास्टिक मिट्टी को संतुलित करने या फ्लाई ऐश ईंटों में एग्रीगेट के रूप में इस्तेमाल हो सकती है। जरूरत जाँच पर निर्भर है।" },
+      { name: "फ्लाई ऐश", use: "फ्लाई ऐश ईंटें", description: "फ्लाई ऐश ईंटों का एक मुख्य घटक, जिसे उपयुक्त बाइंडर और एग्रीगेट के साथ मिलाया जाता है।" },
+      { name: "चूना या सीमेंट", use: "फ्लाई ऐश ईंट बाइंडर", description: "फ्लाई ऐश मिश्रण को बाँधने में मदद करता है। बाइंडर और अनुपात जाँचे गए मिश्रण के अनुसार होने चाहिए।" },
+      { name: "जिप्सम", use: "कुछ फ्लाई ऐश मिश्रण", description: "कुछ मिश्रणों में जमने की प्रक्रिया नियंत्रित करने के लिए उपयोग होता है; हर ईंट में इसकी आवश्यकता नहीं होती।" },
+      { name: "भट्ठे का ईंधन", use: "केवल पकाने की प्रक्रिया", description: "भट्ठे में मिट्टी की ईंटें पकाने के लिए गर्मी देता है। यह ईंट के मिश्रण का हिस्सा नहीं है।" }
+    ],
 
     ownersTitle: "ईंट मालिक",
     ownersSubtitle: "ईंटों का स्टॉक और कीमतें देखने के लिए मालिक चुनें।",

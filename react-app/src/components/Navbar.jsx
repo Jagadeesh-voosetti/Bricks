@@ -1,10 +1,11 @@
 import React from 'react';
-import { LayoutDashboard, Layers, Truck, ShieldCheck, Tag, ShoppingBag, Users, FileText } from 'lucide-react';
+import { LayoutDashboard, Layers, Truck, ShieldCheck, Tag, ShoppingBag, Users, FileText, FlaskConical } from 'lucide-react';
 
 export default function Navbar({ activeTab, setActiveTab, t, orderCount }) {
   const tabs = [
     { id: 'overview', label: t.navOverview, icon: <LayoutDashboard size={17} /> },
     { id: 'stock', label: t.navStock, icon: <Layers size={17} /> },
+    { id: 'materials', label: t.navMaterials, icon: <FlaskConical size={17} /> },
     { id: 'transport', label: t.navTransport, icon: <Truck size={17} /> },
     { id: 'quality', label: t.navQuality, icon: <ShieldCheck size={17} /> },
     { id: 'prices', label: t.navPrices, icon: <Tag size={17} /> },
