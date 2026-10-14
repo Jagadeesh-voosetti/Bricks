@@ -95,13 +95,16 @@ Deno.serve(async (request) => {
 
       const { data: order, error: orderError } = await adminClient
         .from('brick_orders')
-        .select('id, customer_id, total_amount')
+        .select('id, customer_id, advance_amount, payment_method')
         .eq('razorpay_order_id', payment.order_id)
         .maybeSingle();
       if (orderError || !order) {
         return jsonResponse({ error: 'No marketplace order matches this Razorpay order.' }, 404);
       }
-      if (payment.amount !== Math.round(Number(order.total_amount) * 100)) {
+      if (
+        order.payment_method !== 'online' ||
+        payment.amount !== Math.round(Number(order.advance_amount) * 100)
+      ) {
         return jsonResponse({ error: 'The captured payment amount does not match the order.' }, 400);
       }
 
@@ -175,16 +178,31 @@ Deno.serve(async (request) => {
     const body = await request.json();
 
     if (body.action === 'create') {
-      const credentials = getRazorpayCredentials();
+      const paymentMethod = body.payment_method === 'offline' ? 'offline' : 'online';
+      const deliveryDate = typeof body.delivery_date === 'string'
+        ? new Date(`${body.delivery_date}T00:00:00.000Z`)
+        : null;
+      const customerEmail = typeof body.customer_email === 'string' ? body.customer_email.trim() : '';
       if (
         typeof body.listing_id !== 'string' ||
         !Number.isSafeInteger(body.quantity) ||
         body.quantity < 100 ||
-        body.quantity > 1000000
+        body.quantity > 1000000 ||
+        typeof body.delivery_address !== 'string' ||
+        body.delivery_address.trim().length < 8 ||
+        body.delivery_address.trim().length > 400 ||
+        typeof body.delivery_date !== 'string' ||
+        !/^\d{4}-\d{2}-\d{2}$/.test(body.delivery_date) ||
+        !deliveryDate ||
+        Number.isNaN(deliveryDate.getTime()) ||
+        deliveryDate.toISOString().slice(0, 10) !== body.delivery_date ||
+        (customerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)) ||
+        !['self_pickup', 'tractor', 'mini_truck', 'lorry'].includes(body.transport_option)
       ) {
-        return jsonResponse({ error: 'Enter a valid listing and quantity (100–1,000,000 bricks).' }, 400);
+        return jsonResponse({ error: 'Enter valid order quantity, delivery address, date, and transport details.' }, 400);
       }
 
+      const credentials = paymentMethod === 'online' ? getRazorpayCredentials() : null;
       const { data: reserved, error: reserveError } = await adminClient.rpc(
         'reserve_brick_order',
         {
@@ -192,16 +210,38 @@ Deno.serve(async (request) => {
           p_listing_id: body.listing_id,
           p_quantity: body.quantity,
           p_delivery_note: typeof body.delivery_note === 'string' ? body.delivery_note : '',
+          p_delivery_address: body.delivery_address.trim(),
+          p_delivery_date: body.delivery_date,
+          p_transport_option: body.transport_option,
+          p_payment_method: paymentMethod,
           p_customer_name: typeof customer.user_metadata?.full_name === 'string'
             ? customer.user_metadata.full_name
             : '',
           p_customer_phone: customer.phone || '',
-          p_customer_email: customer.email || ''
+          p_customer_email: customerEmail || customer.email || ''
         }
       );
       const reservation = Array.isArray(reserved) ? reserved[0] : null;
       if (reserveError || !reservation) {
         return jsonResponse({ error: reserveError?.message || 'Could not reserve the requested stock.' }, 409);
+      }
+
+      if (paymentMethod === 'offline') {
+        return jsonResponse({
+          order_id: reservation.order_id,
+          unit_price: reservation.unit_price,
+          total_amount: reservation.total_amount,
+          advance_amount: reservation.advance_amount,
+          status: 'offline_pending'
+        });
+      }
+      if (!credentials) {
+        const { error: releaseError } = await adminClient.rpc('release_brick_order', {
+          p_order_id: reservation.order_id,
+          p_customer_id: customer.id
+        });
+        if (releaseError) console.error('Could not release an order without payment credentials:', releaseError.message);
+        throw new Error('Online payment is not configured.');
       }
 
       try {
@@ -212,7 +252,7 @@ Deno.serve(async (request) => {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            amount: Math.round(Number(reservation.total_amount) * 100),
+            amount: Math.round(Number(reservation.advance_amount) * 100),
             currency: 'INR',
             receipt: reservation.order_id,
             payment_capture: 1,
@@ -248,6 +288,7 @@ Deno.serve(async (request) => {
           order_id: reservation.order_id,
           unit_price: reservation.unit_price,
           total_amount: reservation.total_amount,
+          advance_amount: reservation.advance_amount,
           owner_name: reservation.owner_id,
           listing_name: reservation.listing_name
         });
@@ -271,7 +312,7 @@ Deno.serve(async (request) => {
       if (cleanupError) return jsonResponse({ error: cleanupError.message }, 500);
       const { data: order, error: orderError } = await adminClient
         .from('brick_orders')
-        .select('id, razorpay_order_id, total_amount, status')
+        .select('id, razorpay_order_id, advance_amount, status')
         .eq('id', body.order_id)
         .eq('customer_id', customer.id)
         .maybeSingle();
@@ -301,7 +342,7 @@ Deno.serve(async (request) => {
         const capturedPayment = paymentList.items?.find(
           (payment: { status: string; amount: number; currency: string }) =>
             payment.status === 'captured' &&
-            payment.amount === Math.round(Number(order.total_amount) * 100) &&
+            payment.amount === Math.round(Number(order.advance_amount) * 100) &&
             payment.currency === 'INR'
         );
         if (capturedPayment) {
@@ -381,7 +422,7 @@ Deno.serve(async (request) => {
 
       const { data: order, error: orderError } = await adminClient
         .from('brick_orders')
-        .select('id, customer_id, razorpay_order_id, total_amount, status')
+        .select('id, customer_id, razorpay_order_id, advance_amount, payment_method, status')
         .eq('id', body.order_id)
         .eq('customer_id', customer.id)
         .maybeSingle();
@@ -402,9 +443,10 @@ Deno.serve(async (request) => {
         { headers: { Authorization: credentials.authorization } }
       );
       const payment = await paymentResponse.json();
-      const expectedAmount = Math.round(Number(order.total_amount) * 100);
+      const expectedAmount = Math.round(Number(order.advance_amount) * 100);
       if (
         !paymentResponse.ok ||
+        order.payment_method !== 'online' ||
         payment.order_id !== body.razorpay_order_id ||
         payment.amount !== expectedAmount ||
         payment.currency !== 'INR' ||

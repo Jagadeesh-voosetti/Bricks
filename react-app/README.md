@@ -37,11 +37,20 @@ where id = '<owner-profile-id>';
 ```
 
 Each owner can then add brick types, actual stock and per-brick prices from
-their profile. Customers can order listed bricks, pay through Razorpay, and
-download a PDF invoice after the server verifies that the payment was captured.
-Owners see incoming paid orders and can move them through loading, dispatched
-and delivered. Owner accounts are linked by an administrator; users cannot
-claim an owner profile themselves.
+their profile. Customers can order listed bricks through a quantity, transport,
+and payment checkout. A ₹1,000 advance is required; online orders collect it
+through Razorpay, while offline orders remain pending until the linked owner
+verifies receipt. Stock is reserved during checkout and released when a
+reservation expires. The invoice shows the brick total, advance, and remaining
+balance. Delivery vehicle selection is saved with the order, but its price is
+quoted by the owner because transport depends on route and site access. Owners
+see pending offline advances and paid orders, and can move verified orders
+through loading, dispatched and delivered. Owner accounts are linked by an
+administrator; users cannot claim an owner profile themselves.
+
+Customers can download the invoice PDF or use their device's share sheet,
+WhatsApp, or email composer. These are user-confirmed sharing actions, not
+automatic message delivery; the app does not use a paid email or WhatsApp API.
 
 ### Configure and deploy the Supabase backend
 
@@ -60,8 +69,10 @@ To deploy payment verification as well, also create:
 Use Razorpay test keys while testing and live keys only after enabling live
 payments in the Razorpay account. Do not send these secret values in chat.
 After adding the Supabase secrets, run the **Deploy brick marketplace backend**
-workflow from Actions. It applies the database migrations. The payment function
-is deployed too when all three Razorpay secrets are configured.
+workflow from Actions. It applies the database migrations and deploys the
+marketplace order function. Online Razorpay checkout is enabled only when all
+three Razorpay secrets are configured; offline orders can still be submitted
+and verified by the linked owner.
 
 For payment notifications if a customer closes checkout before returning to
 the app, add an `order.paid` webhook in Razorpay pointing to:

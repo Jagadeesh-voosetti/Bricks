@@ -899,6 +899,67 @@ input, select, textarea {
   font-weight: 800;
 }
 
+.checkout-steps,
+.checkout-step-actions,
+.order-share-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.checkout-steps {
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: #f1f5f7;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.checkout-steps .active {
+  color: var(--orange-primary);
+}
+
+.checkout-step-actions > * {
+  flex: 1;
+}
+
+.checkout-summary {
+  display: grid;
+  gap: 9px;
+  padding: 14px;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  background: #f8fafb;
+}
+
+.checkout-summary > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.checkout-summary strong {
+  color: var(--navy-primary);
+  text-align: right;
+}
+
+.order-confirmation {
+  border-color: #86d3aa;
+  background: #f2fbf5;
+}
+
+.order-share-actions > a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  text-decoration: none;
+}
+
 .owner-checkout-panel > .btn-primary {
   display: inline-flex;
   align-items: center;

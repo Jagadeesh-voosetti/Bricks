@@ -29,6 +29,12 @@ export default function OrdersSection({ t, user, localEnquiries, setActiveTab, o
             id,
             quantity,
             total_amount,
+            amount_paid,
+            advance_amount,
+            payment_method,
+            delivery_address,
+            delivery_date,
+            transport_option,
             status,
             invoice_number,
             delivery_note,
@@ -140,8 +146,20 @@ export default function OrdersSection({ t, user, localEnquiries, setActiveTab, o
               <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', fontSize: '14px' }}>
                 <span><strong>{t.orderQuantity}:</strong> {Number(order.quantity).toLocaleString('en-IN')} {t.ownerBricks}</span>
                 <span><strong>{t.invoiceOwner}:</strong> {order.owner?.display_name_en || order.owner?.display_name_te}</span>
-                <span><strong>{t.invoiceTotal}:</strong> ₹{Number(order.total_amount).toLocaleString('en-IN')}</span>
+                <span><strong>{t.brickSubtotal}:</strong> ₹{Number(order.total_amount).toLocaleString('en-IN')}</span>
+                <span><strong>{t.invoiceAdvancePaid}:</strong> ₹{Number(order.amount_paid || 0).toLocaleString('en-IN')}</span>
+                <span><strong>{t.balanceAfterAdvance}:</strong> ₹{Math.max(0, Number(order.total_amount) - Number(order.amount_paid || 0)).toLocaleString('en-IN')}</span>
+                {['payment_pending', 'offline_pending'].includes(order.status) && <span><strong>{t.advanceDue}:</strong> ₹{Number(order.advance_amount).toLocaleString('en-IN')}</span>}
+                <span><strong>{t.paymentMethod}:</strong> {order.payment_method === 'offline' ? t.offlinePayment : t.onlinePayment}</span>
+                {order.delivery_date && <span><strong>{t.deliveryDate}:</strong> {new Date(`${order.delivery_date}T00:00:00`).toLocaleDateString()}</span>}
+                {order.transport_option && <span><strong>{t.transportOption}:</strong> {({
+                  self_pickup: t.transportSelfPickup,
+                  tractor: t.transportTractor,
+                  mini_truck: t.transportMiniTruck,
+                  lorry: t.transportLorry
+                })[order.transport_option] || t.transportQuotePending}</span>}
               </div>
+              {order.delivery_address && <p className="order-delivery-note"><strong>{t.deliveryAddress}:</strong> {order.delivery_address}</p>}
               {order.delivery_note && <p className="order-delivery-note"><strong>{t.ownerDeliveryNote}:</strong> {order.delivery_note}</p>}
               {order.invoice_number && (
                 <button type="button" className="btn-outline order-invoice-link" onClick={() => setActiveTab('invoices')}>

@@ -1,11 +1,16 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { AlertCircle, ArrowLeft, BrickWall, CheckCircle2, LoaderCircle, PackagePlus, ShoppingCart, Truck } from 'lucide-react';
+import { AlertCircle, ArrowLeft, BrickWall, CheckCircle2, CreditCard, LoaderCircle, PackagePlus, ShoppingCart, Truck } from 'lucide-react';
 import { supabase } from '../../supabaseClient';
 import { BRICK_OWNERS } from '../../data/brickOwners';
 import { getMarketplaceErrorMessage } from '../../utils/marketplaceErrors';
 
 const formatNumber = (value) => Number(value || 0).toLocaleString('en-IN');
-const activeOrderStatuses = new Set(['paid', 'loading', 'dispatched', 'delivered']);
+const activeOrderStatuses = new Set(['offline_pending', 'paid', 'loading', 'dispatched', 'delivered']);
+const advanceAmount = 1000;
+const today = () => {
+  const date = new Date();
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+};
 
 const loadRazorpay = () => new Promise((resolve, reject) => {
   if (window.Razorpay) {
@@ -42,6 +47,13 @@ const loadRazorpay = () => new Promise((resolve, reject) => {
 const getOwnerName = (owner, lang) =>
   lang === 'te' ? owner.display_name_te || owner.nameTe : owner.display_name_en || owner.name;
 
+const getTransportName = (option, t) => ({
+  self_pickup: t.transportSelfPickup,
+  tractor: t.transportTractor,
+  mini_truck: t.transportMiniTruck,
+  lorry: t.transportLorry
+})[option] || t.transportQuotePending;
+
 const getFunctionErrorMessage = async (error) => {
   if (error?.context instanceof Response) {
     const responseBody = await error.context.clone().json().catch(() => null);
@@ -62,6 +74,13 @@ export default function BrickOwnersSection({ t, lang, user }) {
   const [checkoutListing, setCheckoutListing] = useState(null);
   const [quantity, setQuantity] = useState('1000');
   const [deliveryNote, setDeliveryNote] = useState('');
+  const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [customerEmail, setCustomerEmail] = useState(user?.email || '');
+  const [deliveryDate, setDeliveryDate] = useState(today());
+  const [transportOption, setTransportOption] = useState('tractor');
+  const [paymentMethod, setPaymentMethod] = useState('online');
+  const [checkoutStep, setCheckoutStep] = useState('quantity');
+  const [orderConfirmation, setOrderConfirmation] = useState(null);
   const [checkoutBusy, setCheckoutBusy] = useState(false);
   const [listingBusy, setListingBusy] = useState(false);
   const [stockDrafts, setStockDrafts] = useState({});
@@ -123,9 +142,9 @@ export default function BrickOwnersSection({ t, lang, user }) {
       if (user && ownerData?.id === selectedOwnerId) {
         const { data: orderData, error: orderError } = await supabase
           .from('brick_orders')
-          .select('id, quantity, total_amount, status, created_at, customer_name, customer_phone, delivery_note, listing:brick_listings(name)')
+          .select('id, quantity, total_amount, advance_amount, amount_paid, payment_method, delivery_date, delivery_address, transport_option, status, created_at, customer_name, customer_phone, delivery_note, listing:brick_listings(name)')
           .eq('owner_id', selectedOwnerId)
-          .in('status', ['paid', 'loading', 'dispatched', 'delivered'])
+          .in('status', ['offline_pending', 'paid', 'loading', 'dispatched', 'delivered'])
           .order('created_at', { ascending: false });
         if (orderError) {
           setError(getMarketplaceErrorMessage(orderError, t));
@@ -231,9 +250,26 @@ export default function BrickOwnersSection({ t, lang, user }) {
     return data;
   };
 
+  const confirmOfflineAdvance = async (orderId) => {
+    setError('');
+    const { data, error: confirmError } = await supabase.rpc('confirm_offline_brick_advance', {
+      p_order_id: orderId
+    });
+    if (confirmError) {
+      setError(confirmError.message);
+      return;
+    }
+    setNotice(`${t.offlineAdvanceConfirmed} ${data || ''}`);
+    await loadSelectedOwner();
+  };
+
   const buyListing = async (event) => {
     event.preventDefault();
     if (!checkoutListing) return;
+    if (Number(quantity) * Number(checkoutListing.price_per_brick) < advanceAmount) {
+      setError(t.advanceMinimumOrder);
+      return;
+    }
     setCheckoutBusy(true);
     setError('');
     setNotice('');
@@ -245,12 +281,38 @@ export default function BrickOwnersSection({ t, lang, user }) {
           action: 'create',
           listing_id: checkoutListing.id,
           quantity: Number(quantity),
-          delivery_note: deliveryNote
+          delivery_note: deliveryNote,
+          delivery_address: deliveryAddress.trim(),
+          delivery_date: deliveryDate,
+          transport_option: transportOption,
+          customer_email: customerEmail.trim(),
+          payment_method: paymentMethod
         }
       });
       if (invokeError) throw new Error(await getFunctionErrorMessage(invokeError));
       if (data?.error) throw new Error(data.error);
       orderId = data.order_id;
+      if (paymentMethod === 'offline') {
+        setOrderConfirmation({
+          id: orderId,
+          invoiceNumber: '',
+          listingName: checkoutListing.name,
+          quantity: Number(quantity),
+          totalAmount: Number(data.total_amount),
+          amountPaid: 0,
+          advanceAmount: Number(data.advance_amount || advanceAmount),
+          customerEmail: customerEmail.trim(),
+          deliveryDate,
+          deliveryAddress: deliveryAddress.trim(),
+          transportOption,
+          status: 'offline_pending'
+        });
+        setCheckoutListing(null);
+        setNotice(t.offlineOrderPending);
+        await loadSelectedOwner();
+        setCheckoutBusy(false);
+        return;
+      }
       if (Number(data.unit_price) !== Number(checkoutListing.price_per_brick)) {
         await cancelPayment(orderId);
         await loadSelectedOwner();
@@ -264,7 +326,7 @@ export default function BrickOwnersSection({ t, lang, user }) {
         currency: data.currency,
         order_id: data.razorpay_order_id,
         name: 'Bricks-Land',
-        description: `${data.listing_name} · ${formatNumber(quantity)} bricks · ₹${Number(data.total_amount).toLocaleString('en-IN')}`,
+        description: `${data.listing_name} · ${formatNumber(quantity)} bricks · Total ₹${Number(data.total_amount).toLocaleString('en-IN')} · Advance ₹${advanceAmount.toLocaleString('en-IN')}`,
         prefill: {
           name: user?.user_metadata?.full_name || '',
           contact: user?.phone || ''
@@ -284,6 +346,20 @@ export default function BrickOwnersSection({ t, lang, user }) {
             setError(verification?.error || await getFunctionErrorMessage(verificationError));
           } else {
             setNotice(`${t.paymentSuccessful} ${verification.invoice_number}`);
+            setOrderConfirmation({
+              id: orderId,
+              invoiceNumber: verification.invoice_number,
+              listingName: checkoutListing.name,
+              quantity: Number(quantity),
+              totalAmount: Number(data.total_amount),
+              amountPaid: Number(data.advance_amount || advanceAmount),
+              advanceAmount: Number(data.advance_amount || advanceAmount),
+              customerEmail: customerEmail.trim(),
+              deliveryDate,
+              deliveryAddress: deliveryAddress.trim(),
+              transportOption,
+              status: 'paid'
+            });
             setCheckoutListing(null);
             await loadSelectedOwner();
           }
@@ -309,6 +385,16 @@ export default function BrickOwnersSection({ t, lang, user }) {
   };
 
   const profileName = (owner) => getOwnerName(owner, lang);
+  const orderShareMessage = orderConfirmation ? [
+    `${t.orderReference}: ${orderConfirmation.id}`,
+    `${orderConfirmation.listingName} · ${formatNumber(orderConfirmation.quantity)} ${t.ownerBricks}`,
+    `${t.brickSubtotal}: ₹${orderConfirmation.totalAmount}`,
+    `${orderConfirmation.status === 'paid' ? t.invoiceAdvancePaid : t.advanceDue}: ₹${orderConfirmation.status === 'paid' ? orderConfirmation.amountPaid : orderConfirmation.advanceAmount}`,
+    `${t.transportOption}: ${getTransportName(orderConfirmation.transportOption, t)}${orderConfirmation.transportOption === 'self_pickup' ? ' · ₹0' : ` · ${t.transportQuotePending}`}`,
+    `${t.deliveryDate}: ${orderConfirmation.deliveryDate}`,
+    `${t.deliveryAddress}: ${orderConfirmation.deliveryAddress}`,
+    orderConfirmation.invoiceNumber ? `${t.invoiceNumber}: ${orderConfirmation.invoiceNumber}` : t.offlineOrderPending
+  ].join('\n') : '';
 
   if (!selectedOwner) {
     return (
@@ -352,6 +438,7 @@ export default function BrickOwnersSection({ t, lang, user }) {
       <button type="button" className="btn-outline owner-back-button" onClick={() => {
         setSelectedOwnerId(null);
         setCheckoutListing(null);
+        setOrderConfirmation(null);
         setError('');
         setNotice('');
       }}>
@@ -422,10 +509,17 @@ export default function BrickOwnersSection({ t, lang, user }) {
                   <button
                     type="button"
                     className="btn-primary owner-buy-button"
-                      disabled={Number(listing.available_stock) < 100 || !user}
+                    disabled={Number(listing.available_stock) < 100 || !user}
                     onClick={() => {
                       setCheckoutListing(listing);
                       setQuantity(String(Math.min(1000, Math.floor(Number(listing.available_stock) / 100) * 100)));
+                      setDeliveryAddress(user?.user_metadata?.delivery_address || '');
+                      setCustomerEmail(user?.email || '');
+                      setDeliveryDate(today());
+                      setTransportOption('tractor');
+                      setPaymentMethod('online');
+                      setCheckoutStep('quantity');
+                      setOrderConfirmation(null);
                       setError('');
                       setNotice('');
                     }}
@@ -460,15 +554,92 @@ export default function BrickOwnersSection({ t, lang, user }) {
             </div>
             <button type="button" className="owner-checkout-close" onClick={() => setCheckoutListing(null)} aria-label={t.modalCancel}>×</button>
           </div>
-          <label>{t.ownerQuantity}<input className="form-input" type="number" min="100" step="100" max={checkoutListing.available_stock} value={quantity} onChange={(event) => setQuantity(event.target.value)} required /></label>
-          <label>{t.ownerDeliveryNote}<textarea className="form-input" rows="3" maxLength="1000" value={deliveryNote} onChange={(event) => setDeliveryNote(event.target.value)} /></label>
-          <p className="owner-order-total">{t.ownerTotal}: ₹{(Number(quantity || 0) * Number(checkoutListing.price_per_brick)).toLocaleString('en-IN')}</p>
-          <button className="btn-primary" type="submit" disabled={checkoutBusy || Number(quantity) < 100 || Number(quantity) > Number(checkoutListing.available_stock)}>
-            {checkoutBusy ? <LoaderCircle className="spin" size={16} /> : <Truck size={16} />}
-            <span>{checkoutBusy ? t.paymentProcessing : t.ownerPayAndOrder}</span>
-          </button>
-          <p className="owner-payment-note">{t.ownerSecurePaymentNote}</p>
+          <div className="checkout-steps" aria-label={t.checkoutProgress}>
+            <span className={checkoutStep === 'quantity' ? 'active' : ''}>1. {t.ownerQuantity.split(' (')[0]}</span>
+            <span className={checkoutStep === 'transport' ? 'active' : ''}>2. {t.transportOption}</span>
+            <span className={checkoutStep === 'payment' ? 'active' : ''}>3. {t.paymentMethod}</span>
+          </div>
+
+          {checkoutStep === 'quantity' && (
+            <>
+              <label>{t.ownerQuantity}<input className="form-input" type="number" min="100" step="100" max={checkoutListing.available_stock} value={quantity} onChange={(event) => setQuantity(event.target.value)} required /></label>
+              <p className="owner-order-total">{t.brickSubtotal}: ₹{(Number(quantity || 0) * Number(checkoutListing.price_per_brick)).toLocaleString('en-IN')}</p>
+              <button type="button" className="btn-primary" disabled={Number(quantity) < 100 || Number(quantity) > Number(checkoutListing.available_stock)} onClick={() => {
+                setError('');
+                setCheckoutStep('transport');
+              }}>{t.continueToTransport}</button>
+            </>
+          )}
+
+          {checkoutStep === 'transport' && (
+            <>
+              <label>{t.deliveryAddress}<textarea className="form-input" rows="2" maxLength="400" value={deliveryAddress} onChange={(event) => setDeliveryAddress(event.target.value)} required minLength="8" /></label>
+              <label>{t.deliveryDate}<input className="form-input" type="date" min={today()} value={deliveryDate} onChange={(event) => setDeliveryDate(event.target.value)} required /></label>
+              <label>{t.customerEmail}<input className="form-input" type="email" maxLength="254" value={customerEmail} onChange={(event) => setCustomerEmail(event.target.value)} /></label>
+              <label>{t.transportOption}
+                <select className="form-input" value={transportOption} onChange={(event) => setTransportOption(event.target.value)}>
+                  <option value="tractor">{t.transportTractor}</option>
+                  <option value="mini_truck">{t.transportMiniTruck}</option>
+                  <option value="lorry">{t.transportLorry}</option>
+                  <option value="self_pickup">{t.transportSelfPickup}</option>
+                </select>
+              </label>
+              <label>{t.ownerDeliveryNote}<textarea className="form-input" rows="2" maxLength="1000" value={deliveryNote} onChange={(event) => setDeliveryNote(event.target.value)} /></label>
+              <div className="checkout-step-actions">
+                <button type="button" className="btn-outline" onClick={() => setCheckoutStep('quantity')}>{t.back}</button>
+                <button type="button" className="btn-primary" disabled={deliveryAddress.trim().length < 8 || !deliveryDate || deliveryDate < today()} onClick={() => setCheckoutStep('payment')}>{t.continueToPayment}</button>
+              </div>
+            </>
+          )}
+
+          {checkoutStep === 'payment' && (
+            <>
+              {Number(quantity) * Number(checkoutListing.price_per_brick) < advanceAmount && (
+                <p className="owner-payment-note">{t.advanceMinimumOrder}</p>
+              )}
+              <div className="checkout-summary">
+                <div><span>{t.ownerQuantity}</span><strong>{formatNumber(quantity)} {t.ownerBricks}</strong></div>
+                <div><span>{t.brickSubtotal}</span><strong>₹{(Number(quantity || 0) * Number(checkoutListing.price_per_brick)).toLocaleString('en-IN')}</strong></div>
+                <div><span>{t.transportCharge}</span><strong>{transportOption === 'self_pickup' ? '₹0' : t.transportQuotePending}</strong></div>
+                <div><span>{t.advanceDue}</span><strong>₹{advanceAmount.toLocaleString('en-IN')}</strong></div>
+                <div><span>{t.balanceAfterAdvance}</span><strong>₹{Math.max(0, Number(quantity || 0) * Number(checkoutListing.price_per_brick) - advanceAmount).toLocaleString('en-IN')}</strong></div>
+              </div>
+              <p className="owner-payment-note">{t.transportQuoteNotice}</p>
+              <label>{t.paymentMethod}
+                <select className="form-input" value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value)}>
+                  <option value="online">{t.onlinePayment}</option>
+                  <option value="offline">{t.offlinePayment}</option>
+                </select>
+              </label>
+              <p className="owner-payment-note">{paymentMethod === 'offline' ? t.offlinePaymentNote : t.advancePaymentNote}</p>
+              <div className="checkout-step-actions">
+                <button type="button" className="btn-outline" onClick={() => setCheckoutStep('transport')}>{t.back}</button>
+                <button className="btn-primary" type="submit" disabled={checkoutBusy || Number(quantity) < 100 || Number(quantity) > Number(checkoutListing.available_stock) || Number(quantity) * Number(checkoutListing.price_per_brick) < advanceAmount}>
+                  {checkoutBusy ? <LoaderCircle className="spin" size={16} /> : paymentMethod === 'online' ? <CreditCard size={16} /> : <Truck size={16} />}
+                  <span>{checkoutBusy ? t.paymentProcessing : paymentMethod === 'online' ? t.payAdvance : t.placeOfflineOrder}</span>
+                </button>
+              </div>
+            </>
+          )}
         </form>
+      )}
+
+      {orderConfirmation && (
+        <div className="owner-checkout-panel order-confirmation">
+          <h2>{t.orderPlaced}</h2>
+          <p>{t.orderReference}: #{orderConfirmation.id.slice(0, 8).toUpperCase()}</p>
+          {orderConfirmation.invoiceNumber && <p>{t.invoiceNumber}: {orderConfirmation.invoiceNumber}</p>}
+          <p>{orderConfirmation.listingName} · {formatNumber(orderConfirmation.quantity)} {t.ownerBricks}</p>
+          <p>{t.brickSubtotal}: ₹{orderConfirmation.totalAmount.toLocaleString('en-IN')} · {orderConfirmation.status === 'paid' ? t.invoiceAdvancePaid : t.advanceDue}: ₹{orderConfirmation.status === 'paid' ? orderConfirmation.amountPaid : orderConfirmation.advanceAmount}</p>
+          <p>{t.transportOption}: {getTransportName(orderConfirmation.transportOption, t)}{orderConfirmation.transportOption === 'self_pickup' ? ' · ₹0' : ` · ${t.transportQuotePending}`}</p>
+          <p>{t.deliveryDate}: {new Date(`${orderConfirmation.deliveryDate}T00:00:00`).toLocaleDateString(lang === 'te' ? 'te-IN' : 'en-IN')} · {t.deliveryAddress}: {orderConfirmation.deliveryAddress}</p>
+          <p>{orderConfirmation.status === 'offline_pending' ? t.offlineOrderPending : t.invoiceAvailableInInvoices}</p>
+          <div className="order-share-actions">
+            <a className="btn-outline" href={`https://wa.me/?text=${encodeURIComponent(orderShareMessage)}`} target="_blank" rel="noreferrer">{t.shareWhatsApp}</a>
+            <a className="btn-outline" href={`mailto:${encodeURIComponent(orderConfirmation.customerEmail || '')}?subject=${encodeURIComponent(`${t.orderPlaced} ${orderConfirmation.id.slice(0, 8).toUpperCase()}`)}&body=${encodeURIComponent(orderShareMessage)}`}>{t.shareEmail}</a>
+          </div>
+          <button type="button" className="btn-outline" onClick={() => setOrderConfirmation(null)}>{t.close}</button>
+        </div>
       )}
 
       {ownProfile && (
@@ -490,11 +661,17 @@ export default function BrickOwnersSection({ t, lang, user }) {
                   {order.customer_phone && <span>{order.customer_phone}</span>}
                   {order.listing?.name && <span>{order.listing.name}</span>}
                   <span>{formatNumber(order.quantity)} {t.ownerBricks} · ₹{Number(order.total_amount).toLocaleString('en-IN')}</span>
+                  <span>{t.invoiceAdvancePaid}: ₹{Number(order.amount_paid).toLocaleString('en-IN')} · {order.payment_method === 'offline' ? t.offlinePayment : t.onlinePayment}</span>
+                  {order.status === 'offline_pending' && <span>{t.advanceDue}: ₹{Number(order.advance_amount).toLocaleString('en-IN')}</span>}
+                  {order.delivery_date && <span>{t.deliveryDate}: {new Date(`${order.delivery_date}T00:00:00`).toLocaleDateString(lang === 'te' ? 'te-IN' : 'en-IN')}</span>}
+                  <span>{t.transportOption}: {getTransportName(order.transport_option, t)}</span>
+                  {order.delivery_address && <span>{t.deliveryAddress}: {order.delivery_address}</span>}
                   <span>{new Date(order.created_at).toLocaleDateString(lang === 'te' ? 'te-IN' : 'en-IN')}</span>
                   {order.delivery_note && <span>{t.ownerDeliveryNote}: {order.delivery_note}</span>}
                 </div>
                 <div className="owner-order-actions">
                   <span className={`status-pill status-${order.status}`}>{t[`orderStatus_${order.status}`]}</span>
+                  {order.status === 'offline_pending' && <button className="btn-outline" type="button" onClick={() => confirmOfflineAdvance(order.id)}>{t.confirmOfflineAdvance}</button>}
                   {nextAction && <button className="btn-outline" type="button" onClick={() => advanceOrder(order)}>{nextAction.label}</button>}
                 </div>
               </article>

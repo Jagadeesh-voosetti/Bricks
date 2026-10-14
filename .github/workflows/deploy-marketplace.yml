@@ -34,7 +34,7 @@ jobs:
             exit 1
           fi
 
-      - name: Check payment secrets
+      - name: Check online payment secrets
         id: payment
         shell: bash
         run: |
@@ -48,7 +48,7 @@ jobs:
           if [ "$missing" -eq 0 ]; then
             echo "enabled=true" >> "$GITHUB_OUTPUT"
           else
-            echo "::warning::Database migrations will still be applied, but Razorpay payment verification will not be deployed until all three payment secrets are configured."
+            echo "::warning::Database migrations and offline-order support will be deployed, but online payments remain unavailable until all three Razorpay secrets are configured."
             echo "enabled=false" >> "$GITHUB_OUTPUT"
           fi
 
@@ -74,6 +74,5 @@ jobs:
           supabase secrets set --env-file "$secret_file" --project-ref "$SUPABASE_PROJECT_REF"
           rm -f "$secret_file"
 
-      - name: Deploy payment verification function
-        if: steps.payment.outputs.enabled == 'true'
+      - name: Deploy marketplace order and payment function
         run: supabase functions deploy marketplace-payment --project-ref "$SUPABASE_PROJECT_REF"
