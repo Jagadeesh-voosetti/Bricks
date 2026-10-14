@@ -25,7 +25,7 @@ included in the published app; never use a Supabase service-role key here.
 
 ## Brick owners, orders and invoices
 
-The owner directory stores only names. Owners must sign in with their own
+The owner directory shows public owner names and locations. Owners must sign in with their own
 accounts, then an administrator must link each account to its owner profile
 from the Supabase SQL editor before it can manage stock or orders. To link an
 account, find the owner's UUID in Supabase Authentication > Users and run:
@@ -36,8 +36,12 @@ set auth_user_id = '<owner-auth-user-uuid>'
 where id = '<owner-profile-id>';
 ```
 
-Each owner can then add brick types, actual stock and per-brick prices from
-their profile. Customers can order listed bricks through a quantity, transport,
+Each linked owner sees an **Owner Updates** tab to update their English and
+Telugu display names, location, and brick listings. They can add a listing or
+select one of their existing listings to update its type, available stock, and
+per-brick price. Changes are stored against the linked owner account and appear
+in the public owner directory and customer ordering flow. Customers can order
+listed bricks through a quantity, transport,
 and payment checkout. A ₹1,000 advance is required; online orders collect it
 through Razorpay, while offline orders remain pending until the linked owner
 verifies receipt. Stock is reserved during checkout and released when a

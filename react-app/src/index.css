@@ -868,6 +868,35 @@ input, select, textarea {
   border-color: var(--orange-border);
 }
 
+.owner-update-form {
+  max-width: 900px;
+}
+
+.owner-update-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.owner-update-divider {
+  height: 1px;
+  background: var(--card-border);
+}
+
+.owner-update-form > h2 {
+  margin: 0;
+}
+
+.owner-update-form .owner-checkout-heading h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.owner-update-form > .owner-form-action {
+  justify-self: start;
+}
+
 .owner-checkout-heading {
   display: flex;
   align-items: flex-start;
@@ -1475,6 +1504,9 @@ input, select, textarea {
     font-size: 21px;
   }
   .owner-listing-form {
+    grid-template-columns: 1fr;
+  }
+  .owner-update-grid {
     grid-template-columns: 1fr;
   }
   .invoice-card {

@@ -12,6 +12,7 @@ import QualitySection from './components/sections/QualitySection';
 import PricesSection from './components/sections/PricesSection';
 import OrdersSection from './components/sections/OrdersSection';
 import EnquiryModal from './components/EnquiryModal';
+import OwnerUpdatesSection from './components/sections/OwnerUpdatesSection';
 
 const BrickOwnersSection = lazy(() => import('./components/sections/BrickOwnersSection'));
 const InvoicesSection = lazy(() => import('./components/sections/InvoicesSection'));
@@ -23,6 +24,7 @@ export default function App() {
 
   const [session, setSession] = useState(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
+  const [linkedOwner, setLinkedOwner] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedBrickForEnquiry, setSelectedBrickForEnquiry] = useState(null);
@@ -79,6 +81,32 @@ export default function App() {
       subscription?.unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    if (!session?.user?.id) return undefined;
+
+    supabase.rpc('get_my_brick_owner')
+      .then(({ data, error }) => {
+        if (error) {
+          console.warn('Could not check linked brick owner profile:', error.message);
+          return;
+        }
+        const owner = Array.isArray(data) ? data[0] : data;
+        if (mounted) setLinkedOwner({ userId: session.user.id, ownerId: owner?.id || null });
+      })
+      .catch((error) => {
+        console.warn('Could not check linked brick owner profile:', error);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [session?.user?.id]);
+
+  const ownerProfileId = linkedOwner?.userId === session?.user?.id
+    ? linkedOwner.ownerId
+    : null;
 
   const handleLogout = async () => {
     try {
@@ -162,6 +190,7 @@ export default function App() {
         setActiveTab={setActiveTab}
         t={t}
         orderCount={localEnquiries.length}
+        isBrickOwner={Boolean(ownerProfileId)}
       />
 
       <main className="main-content">
@@ -215,6 +244,10 @@ export default function App() {
           <Suspense fallback={<div className="owner-loading">{t.ownerLoading || 'Loading...'}</div>}>
             <BrickOwnersSection t={t} lang={lang} user={session?.user} />
           </Suspense>
+        )}
+
+        {activeTab === 'ownerUpdates' && ownerProfileId && (
+          <OwnerUpdatesSection key={ownerProfileId} t={t} lang={lang} ownerId={ownerProfileId} />
         )}
 
         {activeTab === 'invoices' && (
