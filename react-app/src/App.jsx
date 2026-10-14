@@ -104,7 +104,8 @@ export default function App() {
     };
   }, [session?.user?.id]);
 
-  const ownerProfileId = linkedOwner?.userId === session?.user?.id
+  const ownerProfileId = linkedOwner && session?.user?.id
+    && linkedOwner.userId === session.user.id
     ? linkedOwner.ownerId
     : null;
 
