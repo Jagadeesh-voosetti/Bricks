@@ -91,6 +91,21 @@ marketplace order function. Online Razorpay checkout is enabled only when all
 three Razorpay secrets are configured; offline orders can still be submitted
 and verified by the linked owner.
 
+To grant the single admin account permission to enter owner listings, first
+find that account's user UUID under Supabase Authentication > Users after the
+migration has run, then add it from the Supabase SQL editor:
+
+```sql
+insert into public.marketplace_admins (user_id)
+values ('<admin-user-uuid>')
+on conflict (user_id) do nothing;
+```
+
+Only that allowlisted account sees **Admin: Add Owner**. It can create an owner
+profile and add brick listings, or add a listing to an existing profile. This
+does not link an owner's own mobile login; link the owner account separately
+after the owner signs up and verifies their phone.
+
 For payment notifications if a customer closes checkout before returning to
 the app, add an `order.paid` webhook in Razorpay pointing to:
 

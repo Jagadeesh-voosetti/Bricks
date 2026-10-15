@@ -1,7 +1,7 @@
 import React from 'react';
 import { LayoutDashboard, Layers, Truck, ShieldCheck, Tag, ShoppingBag, Users, FileText, FlaskConical, Store } from 'lucide-react';
 
-export default function Navbar({ activeTab, setActiveTab, t, orderCount, isBrickOwner }) {
+export default function Navbar({ activeTab, setActiveTab, t, orderCount, isBrickOwner, isMarketplaceAdmin }) {
   const tabs = [
     { id: 'overview', label: t.navOverview, icon: <LayoutDashboard size={17} /> },
     { id: 'stock', label: t.navStock, icon: <Layers size={17} /> },
@@ -11,6 +11,7 @@ export default function Navbar({ activeTab, setActiveTab, t, orderCount, isBrick
     { id: 'prices', label: t.navPrices, icon: <Tag size={17} /> },
     { id: 'owners', label: t.navOwners, icon: <Users size={17} /> },
     ...(isBrickOwner ? [{ id: 'ownerUpdates', label: t.navOwnerUpdates, icon: <Store size={17} /> }] : []),
+    ...(isMarketplaceAdmin ? [{ id: 'adminOwnerEntry', label: t.navAdminOwnerEntry, icon: <Store size={17} /> }] : []),
     { id: 'invoices', label: t.navInvoices, icon: <FileText size={17} /> },
     {
       id: 'orders',

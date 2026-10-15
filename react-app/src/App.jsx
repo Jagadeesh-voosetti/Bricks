@@ -17,6 +17,7 @@ import VoiceAssistant from './components/VoiceAssistant';
 
 const BrickOwnersSection = lazy(() => import('./components/sections/BrickOwnersSection'));
 const InvoicesSection = lazy(() => import('./components/sections/InvoicesSection'));
+const AdminOwnerEntrySection = lazy(() => import('./components/sections/AdminOwnerEntrySection'));
 
 export default function App() {
   const [lang, setLang] = useState(() => {
@@ -26,6 +27,7 @@ export default function App() {
   const [session, setSession] = useState(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [linkedOwner, setLinkedOwner] = useState(null);
+  const [marketplaceAdminUserId, setMarketplaceAdminUserId] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [marketplaceCheckout, setMarketplaceCheckout] = useState(null);
   const [marketplaceTransportSelection, setMarketplaceTransportSelection] = useState(null);
@@ -107,10 +109,36 @@ export default function App() {
     };
   }, [session?.user?.id]);
 
+  useEffect(() => {
+    let mounted = true;
+    if (!session?.user?.id) {
+      return undefined;
+    }
+
+    supabase.rpc('is_marketplace_admin')
+      .then(({ data, error }) => {
+        if (error) {
+          console.warn('Could not verify marketplace administrator access:', error.message);
+          if (mounted) setMarketplaceAdminUserId(null);
+          return;
+        }
+        if (mounted) setMarketplaceAdminUserId(data === true ? session.user.id : null);
+      })
+      .catch((error) => {
+        console.warn('Could not verify marketplace administrator access:', error);
+        if (mounted) setMarketplaceAdminUserId(null);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [session?.user?.id]);
+
   const ownerProfileId = linkedOwner && session?.user?.id
     && linkedOwner.userId === session.user.id
     ? linkedOwner.ownerId
     : null;
+  const isMarketplaceAdmin = marketplaceAdminUserId === session?.user?.id;
 
   const handleLogout = async () => {
     try {
@@ -119,6 +147,7 @@ export default function App() {
       console.warn('Sign out error:', err);
     }
     setSession(null);
+    setMarketplaceAdminUserId(null);
     setActiveTab('overview');
     setMarketplaceCheckout(null);
     setMarketplaceTransportSelection(null);
@@ -221,6 +250,7 @@ export default function App() {
         t={t}
         orderCount={localEnquiries.length}
         isBrickOwner={Boolean(ownerProfileId)}
+        isMarketplaceAdmin={isMarketplaceAdmin}
       />
 
       <main className="main-content">
@@ -288,6 +318,12 @@ export default function App() {
 
         {activeTab === 'ownerUpdates' && ownerProfileId && (
           <OwnerUpdatesSection key={ownerProfileId} t={t} lang={lang} ownerId={ownerProfileId} />
+        )}
+
+        {activeTab === 'adminOwnerEntry' && isMarketplaceAdmin && (
+          <Suspense fallback={<div className="owner-loading">{t.ownerLoading || 'Loading...'}</div>}>
+            <AdminOwnerEntrySection t={t} />
+          </Suspense>
         )}
 
         {activeTab === 'invoices' && (

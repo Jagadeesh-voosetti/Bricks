@@ -887,6 +887,43 @@ input, select, textarea {
   margin: 0;
 }
 
+.admin-owner-entry-form {
+  display: grid;
+  max-width: 920px;
+  gap: 16px;
+}
+
+.admin-owner-entry-form > label,
+.admin-owner-entry-form .owner-listing-form > label {
+  display: grid;
+  gap: 6px;
+  color: var(--text-main);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.admin-owner-entry-form .form-input {
+  width: 100%;
+  min-width: 0;
+  padding: 9px 10px;
+}
+
+.admin-owner-entry-subheading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 0;
+  color: var(--navy-primary);
+  font-size: 17px;
+}
+
+.admin-owner-entry-form > .btn-primary {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .owner-update-form .owner-checkout-heading h2 {
   display: flex;
   align-items: center;
