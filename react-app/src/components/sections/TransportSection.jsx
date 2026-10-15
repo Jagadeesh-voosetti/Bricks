@@ -86,21 +86,21 @@ export default function TransportSection({
                 {item.icon}
               </div>
               <span className="card-badge" style={{ background: '#e0f2fe', color: '#0369a1' }}>
-                {item.capacity}
+                {item.selfArranged ? t.transportOwnVehicleCapacity : item.capacity}
               </span>
             </div>
 
-            <h3 className="card-title">{item.title}</h3>
+            <h3 className="card-title">{item.selfArranged ? t.transportSelfPickup : item.title}</h3>
             <div style={{ fontSize: '13px', color: '#c2410c', fontWeight: 600, marginBottom: '10px' }}>
               {item.teluguTitle}
             </div>
 
             <div className="card-body">
               <p style={{ marginBottom: '10px' }}>
-                <strong>Best For:</strong> {item.bestFor}
+                <strong>Best For:</strong> {item.selfArranged ? t.transportOwnVehicleBestFor : item.bestFor}
               </p>
               <p style={{ marginBottom: '12px', color: '#64748b' }}>
-                <strong>Site Accessibility:</strong> {item.routeAccess}
+                <strong>Site Accessibility:</strong> {item.selfArranged ? t.transportOwnVehicleRoute : item.routeAccess}
               </p>
             </div>
 
@@ -115,27 +115,29 @@ export default function TransportSection({
                 marginBottom: '16px'
               }}
             >
-              ℹ️ {item.estimatedChargeNote}
+                ℹ️ {item.selfArranged ? t.transportOwnArrangementNote : item.estimatedChargeNote}
             </div>
 
             <div className="card-footer">
               <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>
-                {t.chargesDisclaimer}
+                  {item.selfArranged ? t.transportOwnVehicleNoBooking : t.chargesDisclaimer}
               </span>
-              <button
-                type="button"
-                className="btn-primary"
-                onClick={() =>
-                  onOpenEnquiry({
-                    name: `Transport Booking: ${item.title}`,
-                    priceFormatted: 'Distance-based quote',
-                    supplier: 'Local Parvathipuram Transport Union'
-                  })
-                }
-              >
-                {t.checkAvailabilityBtn}
-              </button>
-            </div>
+                {!item.selfArranged && (
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    onClick={() =>
+                      onOpenEnquiry({
+                        name: `Transport Booking: ${item.title}`,
+                        priceFormatted: 'Distance-based quote',
+                        supplier: 'Local Parvathipuram Transport Union'
+                      })
+                    }
+                  >
+                    {t.checkAvailabilityBtn}
+                  </button>
+                )}
+              </div>
           </article>
         ))}
       </div>

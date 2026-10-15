@@ -126,6 +126,13 @@ export const TRANSPORT_OPTIONS = [
     bestFor: "Zero motor vehicle emissions, steep agrarian slopes or short local lane deliveries.",
     routeAccess: "Best for immediate village localities where trucks cannot turn.",
     estimatedChargeNote: "Locally negotiated per-trip charge with cart owner."
+  },
+  {
+    id: "self-pickup",
+    title: "Own vehicle",
+    teluguTitle: "రవాణా వద్దు — నా వాహనంతో నేనే వస్తాను",
+    icon: "🚙",
+    selfArranged: true
   }
 ];
 
