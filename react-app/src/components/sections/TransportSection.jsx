@@ -1,14 +1,61 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { TRANSPORT_OPTIONS } from '../../data/mockData';
-import { Truck, MapPin, AlertTriangle, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 
-export default function TransportSection({ t, onOpenEnquiry }) {
+export default function TransportSection({
+  t,
+  onOpenEnquiry,
+  checkout,
+  onContinueToPayment,
+  onBackToQuantity
+}) {
+  const [transportOption, setTransportOption] = useState(checkout?.transportOption || 'tractor');
+
   return (
     <div>
       <div className="section-header">
         <h1 className="section-title">{t.transportTitle}</h1>
         <p className="section-subtitle">{t.transportSubtitle}</p>
       </div>
+
+      {checkout && (
+        <section className="owner-checkout-panel transport-checkout-panel">
+          <h2>{t.transportCheckoutTitle}</h2>
+          <p className="section-subtitle">{t.transportCheckoutSubtitle}</p>
+          <div className="checkout-summary">
+            <div><span>{t.ownerProfile}</span><strong>{checkout.ownerName}</strong></div>
+            <div><span>{t.ownerBrickName}</span><strong>{checkout.listingName}</strong></div>
+            <div><span>{t.ownerQuantity}</span><strong>{Number(checkout.quantity).toLocaleString('en-IN')} {t.ownerBricks}</strong></div>
+            <div><span>{t.brickSubtotal}</span><strong>₹{Number(checkout.totalAmount).toLocaleString('en-IN')}</strong></div>
+          </div>
+          <label>
+            {t.transportOption}
+            <select
+              className="form-input"
+              value={transportOption}
+              onChange={(event) => setTransportOption(event.target.value)}
+            >
+              <option value="tractor">{t.transportTractor}</option>
+              <option value="mini_truck">{t.transportMiniTruck}</option>
+              <option value="lorry">{t.transportLorry}</option>
+              <option value="self_pickup">{t.transportSelfPickup}</option>
+            </select>
+          </label>
+          <p className="owner-payment-note">
+            {transportOption === 'self_pickup' ? t.transportOwnArrangementNote : t.transportQuoteNotice}
+          </p>
+          <div className="checkout-step-actions">
+            <button type="button" className="btn-outline" onClick={onBackToQuantity}>{t.back}</button>
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={() => onContinueToPayment(transportOption)}
+            >
+              {t.continueToPayment}
+            </button>
+          </div>
+        </section>
+      )}
 
       {/* Transport pricing factors notice */}
       <div className="notice-card">
