@@ -10,6 +10,16 @@ GitHub Pages whenever changes are pushed to `main`. The public site URL is:
 The workflow builds with `/Bricks/` as the base path so the app's assets load
 from the repository Pages URL.
 
+## Website voice assistant
+
+The floating **Ask us** assistant is available on the login page and dashboard.
+It answers common questions in English, Telugu, and Hindi using the FAQ answers
+in `src/translations.js`; edit those answers and suggested questions there.
+Question matching terms are in `src/components/VoiceAssistant.jsx`. Voice input
+and spoken replies use browser speech features when supported; text chat remains
+available if voice input is unavailable. This FAQ assistant does not answer
+incoming phone calls or use a generative AI service.
+
 ## Android app
 
 The **Build Bricks-Land Android APK** workflow creates a debug APK and uploads

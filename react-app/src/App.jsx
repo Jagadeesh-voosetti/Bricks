@@ -13,6 +13,7 @@ import PricesSection from './components/sections/PricesSection';
 import OrdersSection from './components/sections/OrdersSection';
 import EnquiryModal from './components/EnquiryModal';
 import OwnerUpdatesSection from './components/sections/OwnerUpdatesSection';
+import VoiceAssistant from './components/VoiceAssistant';
 
 const BrickOwnersSection = lazy(() => import('./components/sections/BrickOwnersSection'));
 const InvoicesSection = lazy(() => import('./components/sections/InvoicesSection'));
@@ -198,6 +199,7 @@ export default function App() {
         <footer className="app-footer">
           <p>{t.footerRights}</p>
         </footer>
+        <VoiceAssistant t={t} lang={lang} />
       </div>
     );
   }
@@ -307,6 +309,7 @@ export default function App() {
       <footer className="app-footer">
         <p>{t.footerRights}</p>
       </footer>
+      <VoiceAssistant t={t} lang={lang} />
     </div>
   );
 }

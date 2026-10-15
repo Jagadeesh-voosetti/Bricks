@@ -1533,3 +1533,232 @@ input, select, textarea {
     align-items: flex-start;
   }
 }
+
+.voice-assistant {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 1200;
+}
+
+.voice-assistant-launcher {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 50px;
+  padding: 0 18px;
+  border-radius: 28px;
+  background: var(--orange-primary);
+  color: #ffffff;
+  box-shadow: var(--shadow-lg);
+  font-weight: 700;
+}
+
+.voice-assistant-launcher:hover {
+  background: var(--orange-hover);
+}
+
+.voice-assistant-panel {
+  position: absolute;
+  right: 0;
+  bottom: 64px;
+  display: flex;
+  flex-direction: column;
+  width: min(390px, calc(100vw - 32px));
+  max-height: min(620px, calc(100vh - 110px));
+  overflow: hidden;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  background: var(--card-bg);
+  box-shadow: var(--shadow-lg);
+}
+
+.voice-assistant-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px;
+  background: var(--navy-primary);
+  color: #ffffff;
+}
+
+.voice-assistant-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.voice-assistant-avatar {
+  display: grid;
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.voice-assistant-header h2 {
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.voice-assistant-header p {
+  margin-top: 3px;
+  color: #d8e5eb;
+  font-size: 11px;
+}
+
+.voice-assistant-close,
+.voice-assistant-speak {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+}
+
+.voice-assistant-close {
+  width: 34px;
+  height: 34px;
+  background: transparent;
+  color: #ffffff;
+}
+
+.voice-assistant-close:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.voice-assistant-messages {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 150px;
+  padding: 16px;
+  overflow-y: auto;
+  background: #f8fafc;
+}
+
+.voice-assistant-message {
+  max-width: 90%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  color: var(--text-main);
+  font-size: 13px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.voice-assistant-message p {
+  line-height: 1.5;
+}
+
+.voice-assistant-message.assistant {
+  align-self: flex-start;
+  border: 1px solid var(--card-border);
+  background: #ffffff;
+}
+
+.voice-assistant-message.customer {
+  align-self: flex-end;
+  background: #eaf3f8;
+}
+
+.voice-assistant-speak {
+  width: 28px;
+  height: 28px;
+  margin-top: 6px;
+  background: #f1f5f9;
+  color: var(--navy-primary);
+}
+
+.voice-assistant-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  padding: 0 14px 12px;
+  background: #f8fafc;
+}
+
+.voice-assistant-suggestions button {
+  padding: 7px 9px;
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  background: #ffffff;
+  color: var(--navy-primary);
+  font-size: 11px;
+  text-align: left;
+}
+
+.voice-assistant-suggestions button:hover {
+  border-color: var(--orange-primary);
+}
+
+.voice-assistant-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid var(--card-border);
+  background: #ffffff;
+}
+
+.voice-assistant-form input {
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  padding: 0 10px;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  color: var(--text-main);
+}
+
+.voice-assistant-form input:focus {
+  border-color: var(--orange-primary);
+  outline: 2px solid var(--orange-border);
+}
+
+.voice-assistant-mic,
+.voice-assistant-send {
+  display: grid;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 8px;
+  background: #eef3f6;
+  color: var(--navy-primary);
+}
+
+.voice-assistant-mic.listening,
+.voice-assistant-send {
+  background: var(--orange-primary);
+  color: #ffffff;
+}
+
+.voice-assistant-send:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.voice-assistant-note {
+  padding: 0 14px 12px;
+  background: #ffffff;
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+@media (max-width: 580px) {
+  .voice-assistant {
+    right: 14px;
+    bottom: 14px;
+  }
+
+  .voice-assistant-panel {
+    right: -2px;
+    width: min(390px, calc(100vw - 24px));
+  }
+}
