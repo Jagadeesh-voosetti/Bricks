@@ -15,10 +15,13 @@ from the repository Pages URL.
 The floating **Ask us** assistant is available on the login page and dashboard.
 It answers common questions in English, Telugu, and Hindi using the FAQ answers
 in `src/translations.js`; edit those answers and suggested questions there.
-Question matching terms are in `src/components/VoiceAssistant.jsx`. Voice input
-and spoken replies use browser speech features when supported; text chat remains
-available if voice input is unavailable. This FAQ assistant does not answer
-incoming phone calls or use a generative AI service.
+It defaults to Telugu; customers can change the assistant language in its
+header. Question matching terms are in `src/components/VoiceAssistant.jsx`.
+Voice input and spoken replies use browser speech features when supported.
+Spoken replies also require a speech voice for the selected language to be
+installed on the customer's device; text chat remains available otherwise.
+This FAQ assistant does not answer incoming phone calls or use a generative AI
+service.
 
 ## Android app
 

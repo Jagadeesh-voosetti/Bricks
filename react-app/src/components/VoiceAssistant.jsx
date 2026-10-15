@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Bot, MessageCircle, Mic, MicOff, Send, Volume2, X } from 'lucide-react';
+import { translations } from '../translations';
 
 const voiceLanguages = { en: 'en-IN', te: 'te-IN', hi: 'hi-IN' };
 
@@ -46,7 +47,11 @@ function findAnswer(question, t) {
   return match ? t[match.key] : t.assistantAnswerFallback;
 }
 
-export default function VoiceAssistant({ t, lang }) {
+export default function VoiceAssistant() {
+  const [assistantLang, setAssistantLang] = useState(() => {
+    const storedLanguage = localStorage.getItem('bricks_land_assistant_lang');
+    return ['te', 'en', 'hi'].includes(storedLanguage) ? storedLanguage : 'te';
+  });
   const [isOpen, setIsOpen] = useState(false);
   const [question, setQuestion] = useState('');
   const [isListening, setIsListening] = useState(false);
@@ -57,6 +62,11 @@ export default function VoiceAssistant({ t, lang }) {
   const speechRecognitionSupported = typeof window !== 'undefined'
     && Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
   const speechSynthesisSupported = typeof window !== 'undefined' && Boolean(window.speechSynthesis);
+  const t = translations[assistantLang] || translations.te;
+
+  useEffect(() => {
+    localStorage.setItem('bricks_land_assistant_lang', assistantLang);
+  }, [assistantLang]);
 
   useEffect(() => () => {
     recognitionRef.current?.stop();
@@ -67,7 +77,17 @@ export default function VoiceAssistant({ t, lang }) {
     if (!speechSynthesisSupported) return;
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = voiceLanguages[lang] || voiceLanguages.en;
+    const requestedLanguage = voiceLanguages[assistantLang] || voiceLanguages.te;
+    const matchingVoice = window.speechSynthesis.getVoices().find((voice) =>
+      voice.lang.toLowerCase() === requestedLanguage.toLowerCase()
+      || voice.lang.toLowerCase().startsWith(`${assistantLang}-`)
+    );
+    if (!matchingVoice) {
+      setVoiceError(t.assistantSpeechVoiceMissing);
+      return;
+    }
+    utterance.lang = requestedLanguage;
+    utterance.voice = matchingVoice;
     window.speechSynthesis.speak(utterance);
   };
 
@@ -144,9 +164,25 @@ export default function VoiceAssistant({ t, lang }) {
                 <p>{t.assistantIntro}</p>
               </div>
             </div>
-            <button type="button" className="voice-assistant-close" onClick={closeAssistant} aria-label={t.assistantClose}>
-              <X size={19} />
-            </button>
+            <div className="voice-assistant-header-actions">
+              <select
+                className="voice-assistant-language"
+                value={assistantLang}
+                onChange={(event) => {
+                  setAssistantLang(event.target.value);
+                  setVoiceError('');
+                  window.speechSynthesis?.cancel();
+                }}
+                aria-label={t.assistantLanguage}
+              >
+                <option value="te">తెలుగు</option>
+                <option value="en">English</option>
+                <option value="hi">हिन्दी</option>
+              </select>
+              <button type="button" className="voice-assistant-close" onClick={closeAssistant} aria-label={t.assistantClose}>
+                <X size={19} />
+              </button>
+            </div>
           </header>
 
           <div className="voice-assistant-messages" aria-live="polite">
@@ -206,7 +242,13 @@ export default function VoiceAssistant({ t, lang }) {
             </button>
           </form>
           <p className="voice-assistant-note">
-            {voiceError || (!speechRecognitionSupported ? t.assistantVoiceUnavailable : t.assistantPrivacyNote)}
+            {voiceError || (
+              !speechRecognitionSupported
+                ? t.assistantVoiceUnavailable
+                : !speechSynthesisSupported
+                  ? t.assistantSpeechUnavailable
+                  : t.assistantPrivacyNote
+            )}
           </p>
         </section>
       )}

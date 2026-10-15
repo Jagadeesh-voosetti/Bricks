@@ -199,7 +199,7 @@ export default function App() {
         <footer className="app-footer">
           <p>{t.footerRights}</p>
         </footer>
-        <VoiceAssistant t={t} lang={lang} />
+        <VoiceAssistant />
       </div>
     );
   }
@@ -309,7 +309,7 @@ export default function App() {
       <footer className="app-footer">
         <p>{t.footerRights}</p>
       </footer>
-      <VoiceAssistant t={t} lang={lang} />
+      <VoiceAssistant />
     </div>
   );
 }
