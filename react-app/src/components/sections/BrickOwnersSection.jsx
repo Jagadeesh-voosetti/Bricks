@@ -461,13 +461,12 @@ export default function BrickOwnersSection({
               <article className="content-card owner-listing-card" key={listing.id}>
               <div className="card-top">
                 <div className="owner-listing-icon"><BrickWall size={22} /></div>
-                <span className="card-badge">
-                  {listing.brick_type === 'nela' ? t.ownerNelaBrick
-                    : listing.brick_type === 'number' ? t.ownerNumberBrick
-                      : listing.brick_type || t.ownerBrickType}
-                </span>
               </div>
-              <h2 className="card-title">{listing.name}</h2>
+              <h2 className="card-title">
+                {listing.brick_type === 'nela' ? t.ownerNelaBrick
+                  : listing.brick_type === 'number' ? t.ownerNumberBrick
+                    : listing.name}
+              </h2>
               <p className={`owner-data-freshness${listingFresh ? '' : ' stale'}`} role="status">
                 {listingFresh ? t.ownerDataFresh : t.ownerDataStale}
               </p>
@@ -522,7 +521,9 @@ export default function BrickOwnersSection({
           <div className="owner-checkout-heading">
             <div>
               <h2>{t.ownerPlaceOrder}</h2>
-              <p>{checkoutListing.name} · ₹{Number(checkoutListing.price_per_brick).toLocaleString('en-IN')} {t.ownerPerBrick}</p>
+              <p>{checkoutListing.brick_type === 'nela' ? t.ownerNelaBrick
+                : checkoutListing.brick_type === 'number' ? t.ownerNumberBrick
+                  : checkoutListing.name} · ₹{Number(checkoutListing.price_per_brick).toLocaleString('en-IN')} {t.ownerPerBrick}</p>
             </div>
             <button type="button" className="owner-checkout-close" onClick={() => {
               setCheckoutListing(null);

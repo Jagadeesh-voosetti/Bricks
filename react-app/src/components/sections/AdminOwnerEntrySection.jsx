@@ -3,7 +3,12 @@ import { AlertCircle, CheckCircle2, LoaderCircle, Save, Store } from 'lucide-rea
 import { supabase } from '../../supabaseClient';
 import { getMarketplaceErrorMessage } from '../../utils/marketplaceErrors';
 
-const emptyListing = { name: '', type: '', stock: '', price: '' };
+const emptyListing = { id: '', type: '', stock: '', price: '' };
+
+const getListingName = (type) => ({
+  nela: 'Nela bricks',
+  number: 'Number bricks'
+})[type] || type;
 
 export default function AdminOwnerEntrySection({ t }) {
   const [owners, setOwners] = useState([]);
@@ -74,12 +79,23 @@ export default function AdminOwnerEntrySection({ t }) {
     setListing(selected
       ? {
         id: selected.id,
-        name: selected.name,
         type: selected.brick_type || '',
         stock: String(selected.available_stock),
         price: String(selected.price_per_brick)
       }
       : emptyListing);
+  };
+
+  const selectBrickType = (type) => {
+    const matchingListing = listings.find((item) => item.brick_type === type);
+    setListing(matchingListing
+      ? {
+        id: matchingListing.id,
+        type,
+        stock: String(matchingListing.available_stock),
+        price: String(matchingListing.price_per_brick)
+      }
+      : { ...emptyListing, type });
   };
 
   const saveDetails = async (event) => {
@@ -95,7 +111,7 @@ export default function AdminOwnerEntrySection({ t }) {
         p_display_name_en: owner.nameEn.trim(),
         p_display_name_te: owner.nameTe.trim(),
         p_location: owner.location.trim(),
-        p_listing_name: listing.name.trim(),
+        p_listing_name: getListingName(listing.type),
         p_brick_type: listing.type.trim(),
         p_available_stock: Number(listing.stock),
         p_price_per_brick: Number(listing.price)
@@ -148,11 +164,15 @@ export default function AdminOwnerEntrySection({ t }) {
             </select>
           </label>
 
-          <div className="owner-listing-form">
-            <label>{t.ownerNameEnglish}<input className="form-input" value={owner.nameEn} onChange={(event) => setOwner((current) => ({ ...current, nameEn: event.target.value }))} required maxLength={120} /></label>
-            <label>{t.ownerNameTelugu}<input className="form-input" value={owner.nameTe} onChange={(event) => setOwner((current) => ({ ...current, nameTe: event.target.value }))} required maxLength={120} /></label>
+          {ownerId ? (
             <label>{t.ownerLocation}<input className="form-input" value={owner.location} onChange={(event) => setOwner((current) => ({ ...current, location: event.target.value }))} required maxLength={200} /></label>
-          </div>
+          ) : (
+            <div className="owner-listing-form">
+              <label>{t.ownerNameEnglish}<input className="form-input" value={owner.nameEn} onChange={(event) => setOwner((current) => ({ ...current, nameEn: event.target.value }))} required maxLength={120} /></label>
+              <label>{t.ownerNameTelugu}<input className="form-input" value={owner.nameTe} onChange={(event) => setOwner((current) => ({ ...current, nameTe: event.target.value }))} required maxLength={120} /></label>
+              <label>{t.ownerLocation}<input className="form-input" value={owner.location} onChange={(event) => setOwner((current) => ({ ...current, location: event.target.value }))} required maxLength={200} /></label>
+            </div>
+          )}
 
           <h2 className="admin-owner-entry-subheading"><Store size={18} />{t.ownerListingDetails}</h2>
           {ownerId && (
@@ -162,16 +182,17 @@ export default function AdminOwnerEntrySection({ t }) {
                 <option value="">{t.ownerAddNewListing}</option>
                 {listings.map((item) => (
                   <option key={item.id} value={item.id}>
-                    {item.name}{item.is_active ? '' : ` · ${t.ownerInactiveListing}`}
+                    {item.brick_type === 'nela' ? t.ownerNelaBrick
+                      : item.brick_type === 'number' ? t.ownerNumberBrick
+                        : item.name}{item.is_active ? '' : ` · ${t.ownerInactiveListing}`}
                   </option>
                 ))}
               </select>
             </label>
           )}
           <div className="owner-listing-form">
-            <label>{t.adminBrickName}<input className="form-input" value={listing.name} onChange={(event) => setListing((current) => ({ ...current, name: event.target.value }))} required maxLength={120} /></label>
             <label>{t.adminBrickType}
-              <select className="form-input" required value={listing.type} onChange={(event) => setListing((current) => ({ ...current, type: event.target.value }))}>
+              <select className="form-input" required value={listing.type} onChange={(event) => selectBrickType(event.target.value)}>
                 <option value="">{t.ownerChooseBrickType}</option>
                 <option value="nela">{t.ownerNelaBrick}</option>
                 <option value="number">{t.ownerNumberBrick}</option>

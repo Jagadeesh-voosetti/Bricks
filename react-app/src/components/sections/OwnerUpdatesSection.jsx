@@ -5,11 +5,15 @@ import { getMarketplaceErrorMessage } from '../../utils/marketplaceErrors';
 
 const emptyListing = {
   id: '',
-  name: '',
   type: '',
   stock: '',
   price: ''
 };
+
+const getListingName = (type) => ({
+  nela: 'Nela bricks',
+  number: 'Number bricks'
+})[type] || type;
 
 export default function OwnerUpdatesSection({ t, lang, ownerId }) {
   const [profile, setProfile] = useState({ nameEn: '', nameTe: '', location: '' });
@@ -53,7 +57,6 @@ export default function OwnerUpdatesSection({ t, lang, ownerId }) {
           return firstListing
             ? {
               id: firstListing.id,
-              name: firstListing.name,
               type: firstListing.brick_type || '',
               stock: String(firstListing.available_stock),
               price: String(firstListing.price_per_brick)
@@ -81,7 +84,6 @@ export default function OwnerUpdatesSection({ t, lang, ownerId }) {
     if (!selected) return;
     setListing({
       id: selected.id,
-      name: selected.name,
       type: selected.brick_type || '',
       stock: String(selected.available_stock),
       price: String(selected.price_per_brick)
@@ -96,7 +98,7 @@ export default function OwnerUpdatesSection({ t, lang, ownerId }) {
       !profile.nameEn.trim() ||
       !profile.nameTe.trim() ||
       !profile.location.trim() ||
-      !listing.name.trim() ||
+      !listing.type.trim() ||
       listing.stock.trim() === '' ||
       !Number.isSafeInteger(stock) ||
       stock < 0 ||
@@ -116,7 +118,7 @@ export default function OwnerUpdatesSection({ t, lang, ownerId }) {
         p_display_name_te: profile.nameTe.trim(),
         p_location: profile.location.trim(),
         p_listing_id: listing.id || null,
-        p_listing_name: listing.name.trim(),
+        p_listing_name: getListingName(listing.type),
         p_brick_type: listing.type.trim(),
         p_available_stock: stock,
         p_price_per_brick: price
@@ -179,16 +181,15 @@ export default function OwnerUpdatesSection({ t, lang, ownerId }) {
               <option value="">{t.ownerAddNewListing}</option>
               {listings.map((item) => (
                 <option value={item.id} key={item.id}>
-                  {item.name}{item.is_active ? '' : ` · ${t.ownerInactiveListing}`}
+                  {item.brick_type === 'nela' ? t.ownerNelaBrick
+                    : item.brick_type === 'number' ? t.ownerNumberBrick
+                      : item.name}{item.is_active ? '' : ` · ${t.ownerInactiveListing}`}
                 </option>
               ))}
             </select>
           </label>
 
           <div className="owner-update-grid">
-            <label>{t.ownerBrickName}
-              <input className="form-input" required maxLength="120" value={listing.name} onChange={(event) => setListing({ ...listing, name: event.target.value })} />
-            </label>
             <label>{t.ownerBrickType}
               <select className="form-input" required value={listing.type} onChange={(event) => setListing({ ...listing, type: event.target.value })}>
                 <option value="">{t.ownerChooseBrickType}</option>
