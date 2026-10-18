@@ -28,7 +28,6 @@ export default function App() {
   const [marketplaceAdminUserId, setMarketplaceAdminUserId] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [marketplaceCheckout, setMarketplaceCheckout] = useState(null);
-  const [marketplaceTransportSelection, setMarketplaceTransportSelection] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedBrickForEnquiry, setSelectedBrickForEnquiry] = useState(null);
   const [localEnquiries, setLocalEnquiries] = useState(() => {
@@ -122,7 +121,6 @@ export default function App() {
     setMarketplaceAdminUserId(null);
     setActiveTab('overview');
     setMarketplaceCheckout(null);
-    setMarketplaceTransportSelection(null);
   };
 
   const handleOpenEnquiry = (brickItem = null) => {
@@ -137,25 +135,16 @@ export default function App() {
 
   const handleStartMarketplaceCheckout = (checkout) => {
     setMarketplaceCheckout(checkout);
-    setMarketplaceTransportSelection(null);
     setActiveTab('transport');
-  };
-
-  const handleContinueMarketplaceCheckout = (transportOption) => {
-    setMarketplaceTransportSelection(transportOption);
-    setMarketplaceCheckout(null);
-    setActiveTab('owners');
   };
 
   const handleBackToMarketplaceQuantity = () => {
     setMarketplaceCheckout(null);
-    setMarketplaceTransportSelection(null);
     setActiveTab('owners');
   };
 
   const handleResetMarketplaceCheckout = () => {
     setMarketplaceCheckout(null);
-    setMarketplaceTransportSelection(null);
   };
 
   // Loading spinner during initial session check
@@ -246,7 +235,6 @@ export default function App() {
             t={t}
             onOpenEnquiry={handleOpenEnquiry}
             checkout={marketplaceCheckout}
-            onContinueToPayment={handleContinueMarketplaceCheckout}
             onBackToQuantity={handleBackToMarketplaceQuantity}
           />
         )}
@@ -281,7 +269,6 @@ export default function App() {
               lang={lang}
               user={session?.user}
               onStartCheckout={handleStartMarketplaceCheckout}
-              transportSelection={marketplaceTransportSelection}
               onResetCheckoutNavigation={handleResetMarketplaceCheckout}
             />
           </Suspense>

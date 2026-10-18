@@ -1,15 +1,28 @@
 import React, { useState } from 'react';
 import { TRANSPORT_OPTIONS } from '../../data/mockData';
 import { AlertTriangle } from 'lucide-react';
+import { openWhatsAppOrder } from '../../utils/whatsappOrder';
+
+const getTransportName = (option, t) => ({
+  self_pickup: t.transportSelfPickup,
+  tractor: t.transportTractor,
+  mini_truck: t.transportMiniTruck,
+  lorry: t.transportLorry
+})[option] || t.transportQuotePending;
 
 export default function TransportSection({
   t,
   onOpenEnquiry,
   checkout,
-  onContinueToPayment,
   onBackToQuantity
 }) {
   const [transportOption, setTransportOption] = useState(checkout?.transportOption || 'tractor');
+  const [quantity, setQuantity] = useState(String(checkout?.quantity || ''));
+  const orderQuantity = Number(quantity);
+  const validQuantity = Number.isSafeInteger(orderQuantity)
+    && orderQuantity >= 100
+    && orderQuantity % 100 === 0
+    && orderQuantity <= Number(checkout?.availableStock);
 
   return (
     <div>
@@ -26,8 +39,18 @@ export default function TransportSection({
             <div><span>{t.ownerProfile}</span><strong>{checkout.ownerName}</strong></div>
             <div><span>{t.ownerBrickType}</span><strong>{checkout.listingName}</strong></div>
             <div><span>{t.ownerPrice}</span><strong>₹{Number(checkout.unitPrice).toLocaleString('en-IN')} {t.ownerPerBrick}</strong></div>
-            <div><span>{t.ownerQuantity}</span><strong>{Number(checkout.quantity).toLocaleString('en-IN')} {t.ownerBricks}</strong></div>
-            <div><span>{t.brickSubtotal}</span><strong>₹{Number(checkout.totalAmount).toLocaleString('en-IN')}</strong></div>
+            <label>{t.ownerQuantity}
+              <input
+                className="form-input"
+                type="number"
+                min="100"
+                step="100"
+                max={checkout.availableStock}
+                value={quantity}
+                onChange={(event) => setQuantity(event.target.value)}
+              />
+            </label>
+            <div><span>{t.brickSubtotal}</span><strong>₹{(orderQuantity * Number(checkout.unitPrice)).toLocaleString('en-IN')}</strong></div>
           </div>
           <label>
             {t.transportOption}
@@ -45,14 +68,20 @@ export default function TransportSection({
           <p className="owner-payment-note">
             {transportOption === 'self_pickup' ? t.transportOwnArrangementNote : t.transportQuoteNotice}
           </p>
+          <p className="owner-payment-note">{t.whatsappDraftNotice}</p>
           <div className="checkout-step-actions">
             <button type="button" className="btn-outline" onClick={onBackToQuantity}>{t.back}</button>
             <button
               type="button"
               className="btn-primary"
-              onClick={() => onContinueToPayment(transportOption)}
+              disabled={!validQuantity}
+              onClick={() => openWhatsAppOrder({
+                ...checkout,
+                quantity: orderQuantity,
+                totalAmount: orderQuantity * Number(checkout.unitPrice)
+              }, getTransportName(transportOption, t), t)}
             >
-              {t.ownerBuyNow}
+              {t.continueToWhatsApp}
             </button>
           </div>
         </section>
