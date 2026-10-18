@@ -7,6 +7,7 @@ const emptyListing = { name: '', type: '', stock: '', price: '' };
 
 export default function AdminOwnerEntrySection({ t }) {
   const [owners, setOwners] = useState([]);
+  const [listings, setListings] = useState([]);
   const [ownerId, setOwnerId] = useState('');
   const [owner, setOwner] = useState({ nameEn: '', nameTe: '', location: '' });
   const [listing, setListing] = useState(emptyListing);
@@ -35,10 +36,28 @@ export default function AdminOwnerEntrySection({ t }) {
     loadOwners();
   }, [loadOwners]);
 
-  const selectOwner = (selectedId) => {
+  const loadOwnerListings = useCallback(async (selectedOwnerId) => {
+    if (!selectedOwnerId) {
+      setListings([]);
+      return;
+    }
+    const { data, error: loadError } = await supabase
+      .from('brick_listings')
+      .select('id, name, brick_type, available_stock, price_per_brick, is_active')
+      .eq('owner_id', selectedOwnerId)
+      .order('created_at', { ascending: false });
+    if (loadError) {
+      setError(getMarketplaceErrorMessage(loadError, t));
+      return;
+    }
+    setListings(data || []);
+  }, [t]);
+
+  const selectOwner = async (selectedId) => {
     setOwnerId(selectedId);
     setNotice('');
     setError('');
+    setListing(emptyListing);
     const selectedOwner = owners.find((item) => item.id === selectedId);
     setOwner(selectedOwner
       ? {
@@ -47,6 +66,20 @@ export default function AdminOwnerEntrySection({ t }) {
         location: selectedOwner.location || ''
       }
       : { nameEn: '', nameTe: '', location: '' });
+    await loadOwnerListings(selectedId);
+  };
+
+  const selectListing = (selectedId) => {
+    const selected = listings.find((item) => item.id === selectedId);
+    setListing(selected
+      ? {
+        id: selected.id,
+        name: selected.name,
+        type: selected.brick_type || '',
+        stock: String(selected.available_stock),
+        price: String(selected.price_per_brick)
+      }
+      : emptyListing);
   };
 
   const saveDetails = async (event) => {
@@ -58,6 +91,7 @@ export default function AdminOwnerEntrySection({ t }) {
     try {
       const { data: savedOwnerId, error: saveError } = await supabase.rpc('admin_save_brick_owner_listing', {
         p_owner_id: ownerId || null,
+        p_listing_id: listing.id || null,
         p_display_name_en: owner.nameEn.trim(),
         p_display_name_te: owner.nameTe.trim(),
         p_location: owner.location.trim(),
@@ -72,6 +106,7 @@ export default function AdminOwnerEntrySection({ t }) {
       setNotice(t.adminOwnerSaved);
       setListing(emptyListing);
       await loadOwners();
+      await loadOwnerListings(savedOwnerId);
     } catch (saveError) {
       setError(getMarketplaceErrorMessage(saveError, t));
     } finally {
@@ -119,7 +154,20 @@ export default function AdminOwnerEntrySection({ t }) {
             <label>{t.ownerLocation}<input className="form-input" value={owner.location} onChange={(event) => setOwner((current) => ({ ...current, location: event.target.value }))} required maxLength={200} /></label>
           </div>
 
-          <h2 className="admin-owner-entry-subheading"><Store size={18} />{t.adminListingDetails}</h2>
+          <h2 className="admin-owner-entry-subheading"><Store size={18} />{t.ownerListingDetails}</h2>
+          {ownerId && (
+            <label>
+              {t.ownerChooseListing}
+              <select className="form-input" value={listing.id} onChange={(event) => selectListing(event.target.value)}>
+                <option value="">{t.ownerAddNewListing}</option>
+                {listings.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}{item.is_active ? '' : ` · ${t.ownerInactiveListing}`}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <div className="owner-listing-form">
             <label>{t.adminBrickName}<input className="form-input" value={listing.name} onChange={(event) => setListing((current) => ({ ...current, name: event.target.value }))} required maxLength={120} /></label>
             <label>{t.adminBrickType}<input className="form-input" value={listing.type} onChange={(event) => setListing((current) => ({ ...current, type: event.target.value }))} maxLength={120} /></label>
