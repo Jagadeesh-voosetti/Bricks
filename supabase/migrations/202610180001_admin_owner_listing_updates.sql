@@ -103,3 +103,9 @@ revoke all on function public.admin_save_brick_owner_listing(
 grant execute on function public.admin_save_brick_owner_listing(
   text, uuid, text, text, text, text, text, integer, numeric
 ) to authenticated;
+
+insert into public.marketplace_admins (user_id)
+select id
+from auth.users
+where lower(email) = lower('jagadeesh.voosetti123@gmail.com')
+on conflict (user_id) do nothing;
