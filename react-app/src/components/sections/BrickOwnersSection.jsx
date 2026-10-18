@@ -7,6 +7,20 @@ import { getMarketplaceErrorMessage } from '../../utils/marketplaceErrors';
 const formatNumber = (value) => Number(value || 0).toLocaleString('en-IN');
 const activeOrderStatuses = new Set(['offline_pending', 'paid', 'loading', 'dispatched', 'delivered']);
 const advanceAmount = 1000;
+const indiaRateWindowStart = (date) => {
+  const indiaDate = new Date(date.getTime() + 330 * 60 * 1000);
+  const currentHour = indiaDate.getUTCHours();
+  const todayAtSixUtc = Date.UTC(
+    indiaDate.getUTCFullYear(),
+    indiaDate.getUTCMonth(),
+    indiaDate.getUTCDate(),
+    0,
+    30
+  );
+  return new Date(todayAtSixUtc - (currentHour < 6 ? 24 * 60 * 60 * 1000 : 0));
+};
+const isFreshSinceSixAm = (timestamp, now) =>
+  Boolean(timestamp) && new Date(timestamp).getTime() >= indiaRateWindowStart(now).getTime();
 const today = () => {
   const date = new Date();
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -93,6 +107,7 @@ export default function BrickOwnersSection({
   const [stockDrafts, setStockDrafts] = useState({});
   const [priceDrafts, setPriceDrafts] = useState({});
   const [newListing, setNewListing] = useState({ name: '', type: '', stock: '', price: '' });
+  const [clock, setClock] = useState(() => new Date());
 
   const selectedOwner = owners.find((owner) => owner.id === selectedOwnerId);
   const selectedOwnerName = selectedOwner ? getOwnerName(selectedOwner, lang) : '';
@@ -107,6 +122,11 @@ export default function BrickOwnersSection({
   const receivedOrders = ownerOrders.filter((order) => activeOrderStatuses.has(order.status));
   const loadingOrders = ownerOrders.filter((order) => order.status === 'loading');
   const sentOrders = ownerOrders.filter((order) => ['dispatched', 'delivered'].includes(order.status));
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setClock(new Date()), 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const loadOwners = useCallback(async () => {
     const { data, error: queryError } = await supabase
@@ -130,7 +150,7 @@ export default function BrickOwnersSection({
       const [listingResult, ownerResult] = await Promise.all([
         supabase
           .from('brick_listings')
-          .select('id, owner_id, name, brick_type, available_stock, price_per_brick, is_active')
+          .select('id, owner_id, name, brick_type, available_stock, price_per_brick, is_active, rate_updated_at, stock_updated_at')
           .eq('owner_id', selectedOwnerId)
           .eq('is_active', true)
           .order('created_at', { ascending: false }),
@@ -194,7 +214,12 @@ export default function BrickOwnersSection({
     setError('');
     const { error: updateError } = await supabase
       .from('brick_listings')
-      .update({ available_stock: stock, price_per_brick: price })
+      .update({
+        available_stock: stock,
+        price_per_brick: price,
+        stock_updated_at: new Date().toISOString(),
+        rate_updated_at: new Date().toISOString()
+      })
       .eq('id', listing.id)
       .eq('owner_id', selectedOwnerId);
     if (updateError) {
@@ -487,7 +512,13 @@ export default function BrickOwnersSection({
             <h2>{t.ownerManageStock}</h2>
             <form className="owner-listing-form" onSubmit={addListing}>
               <label>{t.ownerBrickName}<input className="form-input" required maxLength="120" value={newListing.name} onChange={(event) => setNewListing({ ...newListing, name: event.target.value })} /></label>
-              <label>{t.ownerBrickType}<input className="form-input" value={newListing.type} onChange={(event) => setNewListing({ ...newListing, type: event.target.value })} /></label>
+              <label>{t.ownerBrickType}
+                <select className="form-input" value={newListing.type} onChange={(event) => setNewListing({ ...newListing, type: event.target.value })} required>
+                  <option value="">{t.ownerChooseBrickType}</option>
+                  <option value="nela">{t.ownerNelaBrick}</option>
+                  <option value="number">{t.ownerNumberBrick}</option>
+                </select>
+              </label>
               <label>{t.ownerStock}<input className="form-input" required type="number" min="0" step="1" value={newListing.stock} onChange={(event) => setNewListing({ ...newListing, stock: event.target.value })} /></label>
               <label>{t.ownerPrice}<input className="form-input" required type="number" min="0.01" step="0.01" value={newListing.price} onChange={(event) => setNewListing({ ...newListing, price: event.target.value })} /></label>
               <button className="btn-primary owner-form-action" type="submit" disabled={listingBusy}><PackagePlus size={16} />{t.ownerAddListing}</button>
@@ -500,13 +531,24 @@ export default function BrickOwnersSection({
         <div className="owner-loading"><LoaderCircle className="spin" size={20} />{t.ownerLoading}</div>
       ) : listings.length > 0 ? (
         <div className="cards-grid owner-listings-grid">
-          {listings.map((listing) => (
-            <article className="content-card owner-listing-card" key={listing.id}>
+          {listings.map((listing) => {
+            const rateFresh = isFreshSinceSixAm(listing.rate_updated_at, clock);
+            const stockFresh = isFreshSinceSixAm(listing.stock_updated_at, clock);
+            const listingFresh = rateFresh && stockFresh;
+            return (
+              <article className="content-card owner-listing-card" key={listing.id}>
               <div className="card-top">
                 <div className="owner-listing-icon"><BrickWall size={22} /></div>
-                <span className="card-badge">{listing.brick_type || t.ownerBrickType}</span>
+                <span className="card-badge">
+                  {listing.brick_type === 'nela' ? t.ownerNelaBrick
+                    : listing.brick_type === 'number' ? t.ownerNumberBrick
+                      : listing.brick_type || t.ownerBrickType}
+                </span>
               </div>
               <h2 className="card-title">{listing.name}</h2>
+              <p className={`owner-data-freshness${listingFresh ? '' : ' stale'}`} role="status">
+                {listingFresh ? t.ownerDataFresh : t.ownerDataStale}
+              </p>
               {ownProfile ? (
                 <div className="owner-edit-listing">
                   <label>{t.ownerStock}<input className="form-input" type="number" min="0" step="1" value={stockDrafts[listing.id] ?? listing.available_stock} onChange={(event) => setStockDrafts({ ...stockDrafts, [listing.id]: event.target.value })} /></label>
@@ -519,10 +561,11 @@ export default function BrickOwnersSection({
                     <li className="spec-item"><span className="spec-label">{t.ownerStock}</span><span className="spec-value">{formatNumber(listing.available_stock)} {t.ownerBricks}</span></li>
                     <li className="spec-item"><span className="spec-label">{t.ownerPrice}</span><span className="spec-value">₹{Number(listing.price_per_brick).toLocaleString('en-IN')} {t.ownerPerBrick}</span></li>
                   </ul>
+                  {!listingFresh && <p className="owner-payment-note">{t.ownerRefreshBeforeOrder}</p>}
                   <button
                     type="button"
                     className="btn-primary owner-buy-button"
-                    disabled={Number(listing.available_stock) < 100 || !user}
+                    disabled={Number(listing.available_stock) < 100 || !user || !listingFresh}
                     onClick={() => {
                       onResetCheckoutNavigation();
                       setCheckoutListing(listing);
@@ -549,8 +592,9 @@ export default function BrickOwnersSection({
                   </button>
                 </>
               )}
-            </article>
-          ))}
+              </article>
+            );
+          })}
         </div>
       ) : error ? null : (
         <div className="owner-empty-state">

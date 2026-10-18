@@ -839,6 +839,17 @@ input, select, textarea {
   min-width: 0;
 }
 
+.owner-data-freshness {
+  margin: 8px 0 0;
+  color: #18794e;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.owner-data-freshness.stale {
+  color: #a34b0a;
+}
+
 .owner-edit-listing {
   display: grid;
   gap: 12px;

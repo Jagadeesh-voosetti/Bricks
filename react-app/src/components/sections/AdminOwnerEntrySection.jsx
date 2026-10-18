@@ -170,7 +170,16 @@ export default function AdminOwnerEntrySection({ t }) {
           )}
           <div className="owner-listing-form">
             <label>{t.adminBrickName}<input className="form-input" value={listing.name} onChange={(event) => setListing((current) => ({ ...current, name: event.target.value }))} required maxLength={120} /></label>
-            <label>{t.adminBrickType}<input className="form-input" value={listing.type} onChange={(event) => setListing((current) => ({ ...current, type: event.target.value }))} maxLength={120} /></label>
+            <label>{t.adminBrickType}
+              <select className="form-input" required value={listing.type} onChange={(event) => setListing((current) => ({ ...current, type: event.target.value }))}>
+                <option value="">{t.ownerChooseBrickType}</option>
+                <option value="nela">{t.ownerNelaBrick}</option>
+                <option value="number">{t.ownerNumberBrick}</option>
+                {listing.type && !['nela', 'number'].includes(listing.type) && (
+                  <option value={listing.type}>{listing.type}</option>
+                )}
+              </select>
+            </label>
             <label>{t.adminAvailableStock}<input className="form-input" type="number" min="0" step="1" value={listing.stock} onChange={(event) => setListing((current) => ({ ...current, stock: event.target.value }))} required /></label>
             <label>{t.adminPricePerBrick}<input className="form-input" type="number" min="0.01" step="0.01" value={listing.price} onChange={(event) => setListing((current) => ({ ...current, price: event.target.value }))} required /></label>
           </div>

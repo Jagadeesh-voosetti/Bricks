@@ -190,7 +190,14 @@ export default function OwnerUpdatesSection({ t, lang, ownerId }) {
               <input className="form-input" required maxLength="120" value={listing.name} onChange={(event) => setListing({ ...listing, name: event.target.value })} />
             </label>
             <label>{t.ownerBrickType}
-              <input className="form-input" maxLength="120" value={listing.type} onChange={(event) => setListing({ ...listing, type: event.target.value })} />
+              <select className="form-input" required value={listing.type} onChange={(event) => setListing({ ...listing, type: event.target.value })}>
+                <option value="">{t.ownerChooseBrickType}</option>
+                <option value="nela">{t.ownerNelaBrick}</option>
+                <option value="number">{t.ownerNumberBrick}</option>
+                {listing.type && !['nela', 'number'].includes(listing.type) && (
+                  <option value={listing.type}>{listing.type}</option>
+                )}
+              </select>
             </label>
             <label>{t.ownerStock}
               <input className="form-input" required type="number" min="0" step="1" value={listing.stock} onChange={(event) => setListing({ ...listing, stock: event.target.value })} />
