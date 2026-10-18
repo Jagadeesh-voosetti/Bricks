@@ -61,6 +61,12 @@ const loadRazorpay = () => new Promise((resolve, reject) => {
 const getOwnerName = (owner, lang) =>
   lang === 'te' ? owner.display_name_te || owner.nameTe : owner.display_name_en || owner.name;
 
+const getBrickName = (listing, t) => (
+  listing.brick_type === 'nela' ? t.ownerNelaBrick
+    : listing.brick_type === 'number' ? t.ownerNumberBrick
+      : listing.name
+);
+
 const getTransportName = (option, t) => ({
   self_pickup: t.transportSelfPickup,
   tractor: t.transportTractor,
@@ -118,6 +124,45 @@ export default function BrickOwnersSection({
   const receivedOrders = ownerOrders.filter((order) => activeOrderStatuses.has(order.status));
   const loadingOrders = ownerOrders.filter((order) => order.status === 'loading');
   const sentOrders = ownerOrders.filter((order) => ['dispatched', 'delivered'].includes(order.status));
+
+  const startBuyNow = (listing, selectedQuantity = Math.min(1000, Math.floor(Number(listing.available_stock) / 100) * 100)) => {
+    onResetCheckoutNavigation();
+    setCheckoutListing(listing);
+    setQuantity(String(selectedQuantity));
+    setDeliveryAddress(user?.user_metadata?.delivery_address || '');
+    setCustomerEmail(user?.email || '');
+    setDeliveryDate(today());
+    setTransportOption('tractor');
+    setPaymentMethod('online');
+    setCheckoutStep('payment');
+    setOrderConfirmation(null);
+    setError('');
+    setNotice('');
+  };
+
+  const addListingToCart = (listing) => {
+    const selectedQuantity = Math.min(1000, Math.floor(Number(listing.available_stock) / 100) * 100);
+    setCheckoutListing(listing);
+    setQuantity(String(selectedQuantity));
+    setDeliveryAddress(user?.user_metadata?.delivery_address || '');
+    setCustomerEmail(user?.email || '');
+    setDeliveryDate(today());
+    setTransportOption('tractor');
+    setPaymentMethod('online');
+    setCheckoutStep('quantity');
+    setOrderConfirmation(null);
+    setError('');
+    setNotice('');
+    onStartCheckout({
+      ownerName: selectedOwnerName,
+      listingName: getBrickName(listing, t),
+      listingId: listing.id,
+      quantity: selectedQuantity,
+      unitPrice: Number(listing.price_per_brick),
+      totalAmount: selectedQuantity * Number(listing.price_per_brick),
+      transportOption: 'tractor'
+    });
+  };
 
   useEffect(() => {
     const timer = window.setInterval(() => setClock(new Date()), 30_000);
@@ -476,24 +521,21 @@ export default function BrickOwnersSection({
               </ul>
               {!listingFresh && <p className="owner-payment-note">{t.ownerRefreshBeforeOrder}</p>}
               {!ownProfile && (
+                <div className="owner-listing-actions">
+                  <button
+                    type="button"
+                    className="btn-outline owner-buy-button"
+                    disabled={Number(listing.available_stock) < 100 || !user || !listingFresh}
+                    onClick={() => addListingToCart(listing)}
+                  >
+                    <ShoppingCart size={16} />
+                    <span>{t.addToCart}</span>
+                  </button>
                   <button
                     type="button"
                     className="btn-primary owner-buy-button"
                     disabled={Number(listing.available_stock) < 100 || !user || !listingFresh}
-                    onClick={() => {
-                      onResetCheckoutNavigation();
-                      setCheckoutListing(listing);
-                      setQuantity(String(Math.min(1000, Math.floor(Number(listing.available_stock) / 100) * 100)));
-                      setDeliveryAddress(user?.user_metadata?.delivery_address || '');
-                      setCustomerEmail(user?.email || '');
-                      setDeliveryDate(today());
-                      setTransportOption('tractor');
-                      setPaymentMethod('online');
-                      setCheckoutStep('quantity');
-                      setOrderConfirmation(null);
-                      setError('');
-                      setNotice('');
-                    }}
+                    onClick={() => startBuyNow(listing)}
                   >
                     <ShoppingCart size={16} />
                     <span>
@@ -504,6 +546,7 @@ export default function BrickOwnersSection({
                           : t.ownerBuyNow}
                     </span>
                   </button>
+                </div>
               )}
               </article>
             );
@@ -521,9 +564,7 @@ export default function BrickOwnersSection({
           <div className="owner-checkout-heading">
             <div>
               <h2>{t.ownerPlaceOrder}</h2>
-              <p>{checkoutListing.brick_type === 'nela' ? t.ownerNelaBrick
-                : checkoutListing.brick_type === 'number' ? t.ownerNumberBrick
-                  : checkoutListing.name} · ₹{Number(checkoutListing.price_per_brick).toLocaleString('en-IN')} {t.ownerPerBrick}</p>
+              <p>{getBrickName(checkoutListing, t)} · ₹{Number(checkoutListing.price_per_brick).toLocaleString('en-IN')} {t.ownerPerBrick}</p>
             </div>
             <button type="button" className="owner-checkout-close" onClick={() => {
               setCheckoutListing(null);
@@ -545,8 +586,10 @@ export default function BrickOwnersSection({
                 setCheckoutStep('transport');
                 onStartCheckout({
                   ownerName: selectedOwnerName,
-                  listingName: checkoutListing.name,
+                  listingName: getBrickName(checkoutListing, t),
+                  listingId: checkoutListing.id,
                   quantity: Number(quantity),
+                  unitPrice: Number(checkoutListing.price_per_brick),
                   totalAmount: Number(quantity) * Number(checkoutListing.price_per_brick),
                   transportOption
                 });
@@ -556,6 +599,28 @@ export default function BrickOwnersSection({
 
           {activeCheckoutStep === 'payment' && (
             <>
+              {!transportSelection && (
+                <label>{t.transportOption}
+                  <select className="form-input" value={transportOption} onChange={(event) => setTransportOption(event.target.value)}>
+                    <option value="tractor">{t.transportTractor}</option>
+                    <option value="mini_truck">{t.transportMiniTruck}</option>
+                    <option value="lorry">{t.transportLorry}</option>
+                    <option value="self_pickup">{t.transportSelfPickup}</option>
+                  </select>
+                </label>
+              )}
+              <label>{t.ownerQuantity}
+                <input
+                  className="form-input"
+                  type="number"
+                  min="100"
+                  step="100"
+                  max={checkoutListing.available_stock}
+                  value={quantity}
+                  onChange={(event) => setQuantity(event.target.value)}
+                  required
+                />
+              </label>
               {Number(quantity) * Number(checkoutListing.price_per_brick) < advanceAmount && (
                 <p className="owner-payment-note">{t.advanceMinimumOrder}</p>
               )}
@@ -586,8 +651,10 @@ export default function BrickOwnersSection({
                   setCheckoutStep('transport');
                   onStartCheckout({
                     ownerName: selectedOwnerName,
-                    listingName: checkoutListing.name,
+                    listingName: getBrickName(checkoutListing, t),
+                    listingId: checkoutListing.id,
                     quantity: Number(quantity),
+                    unitPrice: Number(checkoutListing.price_per_brick),
                     totalAmount: Number(quantity) * Number(checkoutListing.price_per_brick),
                     transportOption: activeTransportOption
                   });

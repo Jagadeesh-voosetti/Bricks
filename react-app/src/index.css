@@ -868,6 +868,16 @@ input, select, textarea {
   margin-top: 16px;
 }
 
+.owner-listing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.owner-listing-actions .owner-buy-button {
+  flex: 1 1 140px;
+}
+
 .owner-buy-button:disabled {
   cursor: not-allowed;
   opacity: 0.58;

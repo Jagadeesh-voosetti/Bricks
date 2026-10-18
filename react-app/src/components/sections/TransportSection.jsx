@@ -20,11 +20,12 @@ export default function TransportSection({
 
       {checkout && (
         <section className="owner-checkout-panel transport-checkout-panel">
-          <h2>{t.transportCheckoutTitle}</h2>
+          <h2>{t.cartTitle}</h2>
           <p className="section-subtitle">{t.transportCheckoutSubtitle}</p>
           <div className="checkout-summary">
             <div><span>{t.ownerProfile}</span><strong>{checkout.ownerName}</strong></div>
-            <div><span>{t.ownerBrickName}</span><strong>{checkout.listingName}</strong></div>
+            <div><span>{t.ownerBrickType}</span><strong>{checkout.listingName}</strong></div>
+            <div><span>{t.ownerPrice}</span><strong>₹{Number(checkout.unitPrice).toLocaleString('en-IN')} {t.ownerPerBrick}</strong></div>
             <div><span>{t.ownerQuantity}</span><strong>{Number(checkout.quantity).toLocaleString('en-IN')} {t.ownerBricks}</strong></div>
             <div><span>{t.brickSubtotal}</span><strong>₹{Number(checkout.totalAmount).toLocaleString('en-IN')}</strong></div>
           </div>
@@ -51,7 +52,7 @@ export default function TransportSection({
               className="btn-primary"
               onClick={() => onContinueToPayment(transportOption)}
             >
-              {t.continueToPayment}
+              {t.ownerBuyNow}
             </button>
           </div>
         </section>
