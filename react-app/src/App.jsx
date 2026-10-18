@@ -12,7 +12,6 @@ import QualitySection from './components/sections/QualitySection';
 import PricesSection from './components/sections/PricesSection';
 import OrdersSection from './components/sections/OrdersSection';
 import EnquiryModal from './components/EnquiryModal';
-import OwnerUpdatesSection from './components/sections/OwnerUpdatesSection';
 import VoiceAssistant from './components/VoiceAssistant';
 
 const BrickOwnersSection = lazy(() => import('./components/sections/BrickOwnersSection'));
@@ -26,7 +25,6 @@ export default function App() {
 
   const [session, setSession] = useState(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
-  const [linkedOwner, setLinkedOwner] = useState(null);
   const [marketplaceAdminUserId, setMarketplaceAdminUserId] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [marketplaceCheckout, setMarketplaceCheckout] = useState(null);
@@ -89,28 +87,6 @@ export default function App() {
 
   useEffect(() => {
     let mounted = true;
-    if (!session?.user?.id) return undefined;
-
-    supabase.rpc('get_my_brick_owner')
-      .then(({ data, error }) => {
-        if (error) {
-          console.warn('Could not check linked brick owner profile:', error.message);
-          return;
-        }
-        const owner = Array.isArray(data) ? data[0] : data;
-        if (mounted) setLinkedOwner({ userId: session.user.id, ownerId: owner?.id || null });
-      })
-      .catch((error) => {
-        console.warn('Could not check linked brick owner profile:', error);
-      });
-
-    return () => {
-      mounted = false;
-    };
-  }, [session?.user?.id]);
-
-  useEffect(() => {
-    let mounted = true;
     if (!session?.user?.id) {
       return undefined;
     }
@@ -134,10 +110,6 @@ export default function App() {
     };
   }, [session?.user?.id]);
 
-  const ownerProfileId = linkedOwner && session?.user?.id
-    && linkedOwner.userId === session.user.id
-    ? linkedOwner.ownerId
-    : null;
   const isMarketplaceAdmin = marketplaceAdminUserId === session?.user?.id;
 
   const handleLogout = async () => {
@@ -249,7 +221,6 @@ export default function App() {
         setActiveTab={setActiveTab}
         t={t}
         orderCount={localEnquiries.length}
-        isBrickOwner={Boolean(ownerProfileId)}
         isMarketplaceAdmin={isMarketplaceAdmin}
       />
 
@@ -315,10 +286,6 @@ export default function App() {
             />
           </Suspense>
         </div>
-
-        {activeTab === 'ownerUpdates' && ownerProfileId && (
-          <OwnerUpdatesSection key={ownerProfileId} t={t} lang={lang} ownerId={ownerProfileId} />
-        )}
 
         {activeTab === 'adminOwnerEntry' && isMarketplaceAdmin && (
           <Suspense fallback={<div className="owner-loading">{t.ownerLoading || 'Loading...'}</div>}>

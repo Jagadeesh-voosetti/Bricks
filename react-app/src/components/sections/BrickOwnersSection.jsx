@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { AlertCircle, ArrowLeft, BrickWall, CheckCircle2, CreditCard, LoaderCircle, PackagePlus, ShoppingCart, Truck } from 'lucide-react';
+import { AlertCircle, ArrowLeft, BrickWall, CheckCircle2, CreditCard, LoaderCircle, ShoppingCart, Truck } from 'lucide-react';
 import { supabase } from '../../supabaseClient';
 import { BRICK_OWNERS } from '../../data/brickOwners';
 import { getMarketplaceErrorMessage } from '../../utils/marketplaceErrors';
@@ -103,10 +103,6 @@ export default function BrickOwnersSection({
   const [checkoutStep, setCheckoutStep] = useState('quantity');
   const [orderConfirmation, setOrderConfirmation] = useState(null);
   const [checkoutBusy, setCheckoutBusy] = useState(false);
-  const [listingBusy, setListingBusy] = useState(false);
-  const [stockDrafts, setStockDrafts] = useState({});
-  const [priceDrafts, setPriceDrafts] = useState({});
-  const [newListing, setNewListing] = useState({ name: '', type: '', stock: '', price: '' });
   const [clock, setClock] = useState(() => new Date());
 
   const selectedOwner = owners.find((owner) => owner.id === selectedOwnerId);
@@ -201,62 +197,6 @@ export default function BrickOwnersSection({
   useEffect(() => {
     loadSelectedOwner();
   }, [loadSelectedOwner]);
-
-  const updateListing = async (listing) => {
-    const stock = Number(stockDrafts[listing.id] ?? listing.available_stock);
-    const price = Number(priceDrafts[listing.id] ?? listing.price_per_brick);
-    if (!Number.isSafeInteger(stock) || stock < 0 || !Number.isFinite(price) || price <= 0) {
-      setError(t.ownerInvalidListing);
-      return;
-    }
-
-    setListingBusy(true);
-    setError('');
-    const { error: updateError } = await supabase
-      .from('brick_listings')
-      .update({
-        available_stock: stock,
-        price_per_brick: price,
-        stock_updated_at: new Date().toISOString(),
-        rate_updated_at: new Date().toISOString()
-      })
-      .eq('id', listing.id)
-      .eq('owner_id', selectedOwnerId);
-    if (updateError) {
-      setError(updateError.message);
-    } else {
-      setNotice(t.ownerListingUpdated);
-      await loadSelectedOwner();
-    }
-    setListingBusy(false);
-  };
-
-  const addListing = async (event) => {
-    event.preventDefault();
-    if (!linkedOwner || !newListing.name.trim() || !Number.isSafeInteger(Number(newListing.stock)) ||
-      Number(newListing.stock) < 0 || !Number.isFinite(Number(newListing.price)) || Number(newListing.price) <= 0) {
-      setError(t.ownerInvalidListing);
-      return;
-    }
-
-    setListingBusy(true);
-    setError('');
-    const { error: insertError } = await supabase.from('brick_listings').insert({
-      owner_id: linkedOwner.id,
-      name: newListing.name.trim(),
-      brick_type: newListing.type.trim(),
-      available_stock: Number(newListing.stock),
-      price_per_brick: Number(newListing.price)
-    });
-    if (insertError) {
-      setError(insertError.message);
-    } else {
-      setNotice(t.ownerListingAdded);
-      setNewListing({ name: '', type: '', stock: '', price: '' });
-      await loadSelectedOwner();
-    }
-    setListingBusy(false);
-  };
 
   const advanceOrder = async (order) => {
     const nextStatus = { paid: 'loading', loading: 'dispatched', dispatched: 'delivered' }[order.status];
@@ -501,30 +441,12 @@ export default function BrickOwnersSection({
       {notice && <div className="alert-box alert-success owner-feedback"><CheckCircle2 size={18} /><span>{notice}</span></div>}
 
       {ownProfile && (
-        <>
-          <div className="owner-stats-grid">
-            <article className="owner-stat-card"><span>{t.ownerTotalStock}</span><strong>{formatNumber(totalStock)}</strong></article>
-            <article className="owner-stat-card"><span>{t.ownerOrdersReceived}</span><strong>{formatNumber(receivedOrders.length)}</strong></article>
-            <article className="owner-stat-card"><span>{t.ownerOrdersLoading}</span><strong>{formatNumber(loadingOrders.length)}</strong></article>
-            <article className="owner-stat-card"><span>{t.ownerOrdersSent}</span><strong>{formatNumber(sentOrders.length)}</strong></article>
-          </div>
-          <div className="owner-management-panel">
-            <h2>{t.ownerManageStock}</h2>
-            <form className="owner-listing-form" onSubmit={addListing}>
-              <label>{t.ownerBrickName}<input className="form-input" required maxLength="120" value={newListing.name} onChange={(event) => setNewListing({ ...newListing, name: event.target.value })} /></label>
-              <label>{t.ownerBrickType}
-                <select className="form-input" value={newListing.type} onChange={(event) => setNewListing({ ...newListing, type: event.target.value })} required>
-                  <option value="">{t.ownerChooseBrickType}</option>
-                  <option value="nela">{t.ownerNelaBrick}</option>
-                  <option value="number">{t.ownerNumberBrick}</option>
-                </select>
-              </label>
-              <label>{t.ownerStock}<input className="form-input" required type="number" min="0" step="1" value={newListing.stock} onChange={(event) => setNewListing({ ...newListing, stock: event.target.value })} /></label>
-              <label>{t.ownerPrice}<input className="form-input" required type="number" min="0.01" step="0.01" value={newListing.price} onChange={(event) => setNewListing({ ...newListing, price: event.target.value })} /></label>
-              <button className="btn-primary owner-form-action" type="submit" disabled={listingBusy}><PackagePlus size={16} />{t.ownerAddListing}</button>
-            </form>
-          </div>
-        </>
+        <div className="owner-stats-grid">
+          <article className="owner-stat-card"><span>{t.ownerTotalStock}</span><strong>{formatNumber(totalStock)}</strong></article>
+          <article className="owner-stat-card"><span>{t.ownerOrdersReceived}</span><strong>{formatNumber(receivedOrders.length)}</strong></article>
+          <article className="owner-stat-card"><span>{t.ownerOrdersLoading}</span><strong>{formatNumber(loadingOrders.length)}</strong></article>
+          <article className="owner-stat-card"><span>{t.ownerOrdersSent}</span><strong>{formatNumber(sentOrders.length)}</strong></article>
+        </div>
       )}
 
       {loading ? (
@@ -549,19 +471,12 @@ export default function BrickOwnersSection({
               <p className={`owner-data-freshness${listingFresh ? '' : ' stale'}`} role="status">
                 {listingFresh ? t.ownerDataFresh : t.ownerDataStale}
               </p>
-              {ownProfile ? (
-                <div className="owner-edit-listing">
-                  <label>{t.ownerStock}<input className="form-input" type="number" min="0" step="1" value={stockDrafts[listing.id] ?? listing.available_stock} onChange={(event) => setStockDrafts({ ...stockDrafts, [listing.id]: event.target.value })} /></label>
-                  <label>{t.ownerPrice}<input className="form-input" type="number" min="0.01" step="0.01" value={priceDrafts[listing.id] ?? listing.price_per_brick} onChange={(event) => setPriceDrafts({ ...priceDrafts, [listing.id]: event.target.value })} /></label>
-                  <button className="btn-outline" type="button" disabled={listingBusy} onClick={() => updateListing(listing)}>{t.ownerSaveListing}</button>
-                </div>
-              ) : (
-                <>
-                  <ul className="spec-list">
-                    <li className="spec-item"><span className="spec-label">{t.ownerStock}</span><span className="spec-value">{formatNumber(listing.available_stock)} {t.ownerBricks}</span></li>
-                    <li className="spec-item"><span className="spec-label">{t.ownerPrice}</span><span className="spec-value">₹{Number(listing.price_per_brick).toLocaleString('en-IN')} {t.ownerPerBrick}</span></li>
-                  </ul>
-                  {!listingFresh && <p className="owner-payment-note">{t.ownerRefreshBeforeOrder}</p>}
+              <ul className="spec-list">
+                <li className="spec-item"><span className="spec-label">{t.ownerStock}</span><span className="spec-value">{formatNumber(listing.available_stock)} {t.ownerBricks}</span></li>
+                <li className="spec-item"><span className="spec-label">{t.ownerPrice}</span><span className="spec-value">₹{Number(listing.price_per_brick).toLocaleString('en-IN')} {t.ownerPerBrick}</span></li>
+              </ul>
+              {!listingFresh && <p className="owner-payment-note">{t.ownerRefreshBeforeOrder}</p>}
+              {!ownProfile && (
                   <button
                     type="button"
                     className="btn-primary owner-buy-button"
@@ -590,7 +505,6 @@ export default function BrickOwnersSection({
                           : t.ownerBuyNow}
                     </span>
                   </button>
-                </>
               )}
               </article>
             );
